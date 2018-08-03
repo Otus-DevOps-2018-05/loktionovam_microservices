@@ -8,3 +8,5 @@ gem 'prometheus-client'
 gem 'rack'
 gem 'rufus-scheduler'
 gem 'json'
+# https://github.com/tzinfo/tzinfo/wiki/Resolving-TZInfo::DataSourceNotFound-Errors
+gem 'tzinfo-data'
