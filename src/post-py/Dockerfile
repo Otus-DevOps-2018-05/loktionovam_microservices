@@ -1,11 +1,31 @@
-FROM python:3.6.0-alpine
+FROM alpine:3.8 as build
+ENV APP_HOME /app
+ENV PKG_PATH venv/lib/python3.6/site-packages
+RUN apk add --no-cache python3
+WORKDIR $APP_HOME
+COPY . $APP_HOME
 
-WORKDIR /app
-ADD . /app
+RUN python3 -m venv venv && \
+    source venv/bin/activate && \
+    pip install -r $APP_HOME/requirements.txt && \
+    rm -r $PKG_PATH/pkg_resources* && \
+    rm -r $PKG_PATH/setuptools* && \
+    rm -r $PKG_PATH/pip* && \
+    find / -name "*.pyc" -delete
 
-RUN pip install -r /app/requirements.txt
+FROM alpine:3.8
+LABEL version="2.2"
+ENV APP_HOME /app
+
+RUN apk add --no-cache python3 && \
+    find / -name "*.pyc" -delete
+
+COPY --from=build $APP_HOME $APP_HOME
+
+WORKDIR $APP_HOME
 
 ENV POST_DATABASE_HOST post_db
 ENV POST_DATABASE posts
 
-ENTRYPOINT ["python3", "post_app.py"]
+ENTRYPOINT ["./docker-entrypoint.sh"]
+CMD ["python3", "post_app.py"]

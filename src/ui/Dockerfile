@@ -1,19 +1,26 @@
-FROM ubuntu:16.04
-RUN apt-get update \
-    && apt-get install -y ruby-full ruby-dev build-essential \
-    && gem install bundler --no-ri --no-rdoc
-
+FROM alpine:3.7 AS build
 ENV APP_HOME /app
-RUN mkdir $APP_HOME
+RUN apk add g++ \
+            make \
+            ruby \
+            ruby-dev && \
+    mkdir -p $APP_HOME && \
+    gem install bundler --no-ri --no-rdoc 
 
 WORKDIR $APP_HOME
-ADD Gemfile* $APP_HOME/
-RUN bundle install
-ADD . $APP_HOME
+COPY . $APP_HOME
+RUN bundle install --jobs 4 --deployment --binstubs --standalone && \
+    rm vendor/bundle/ruby/2.4.0/cache/*
 
+FROM alpine:3.7
+LABEL version="3.2"
+ENV APP_HOME /app
+RUN apk add --no-cache ruby
+COPY --from=build $APP_HOME $APP_HOME
+WORKDIR $APP_HOME
 ENV POST_SERVICE_HOST post
 ENV POST_SERVICE_PORT 5000
 ENV COMMENT_SERVICE_HOST comment
 ENV COMMENT_SERVICE_PORT 9292
 
-CMD ["puma"]
+CMD ["/app/bin/puma"]
