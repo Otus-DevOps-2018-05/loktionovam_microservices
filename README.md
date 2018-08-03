@@ -259,7 +259,7 @@ loktionovam/post    1.0                 228a932d5c0d        3 hours ago         
 ```bash
 # Размеры образов comment
 REPOSITORY            TAG                 IMAGE ID            CREATED             SIZE
-loktionovam/comment   2.0                 eab3a4ab6bdd        11 seconds ago      27.7MB # alpine, multi-stage build, cache cleaning
+loktionovam/comment   2.0                 d42d889bed54        18 seconds ago      30.1MB # alpine, multi-stage build, cache cleaning
 loktionovam/comment   1.0                 d1e034889328        4 hours ago         769MB # ruby 2.2
 ```
 
