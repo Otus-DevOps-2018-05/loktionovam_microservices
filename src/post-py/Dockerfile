@@ -22,7 +22,7 @@ RUN apk add --no-cache python3 && \
     find / -name "*.pyc" -delete
 
 COPY --from=build $APP_RUNTIME $APP_RUNTIME
-
+COPY . $APP_HOME
 WORKDIR $APP_HOME
 
 ENV POST_DATABASE_HOST post_db
