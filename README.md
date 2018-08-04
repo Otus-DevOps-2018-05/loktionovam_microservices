@@ -303,3 +303,71 @@ docker run -d --network=reddit -p 9292:9292 loktionovam/ui:3.2
 ### 14.3 Как проверить проект
 
 После запуска, reddit приложение будет доступно по адресу <http://docker_host_ip:9292>, при этом можно создать пост и оставить комментарий.
+
+## Homework-15: Docker сети, docker-compose
+
+Основные задания:
+
+- Работа с none, host, bridge сетями docker
+- Установка docker-compose
+- Сборка образов приложения reddit с помощью docker-compose
+- Запуск приложения reddit с помощью docker-compose
+- Изменение префикса в docker-compose
+
+В docker-compose имена префиксов контейнеров задаются env переменной **COMPOSE_PROJECT_NAME**, которая по умолчанию равна названию каталога с проектом:
+
+```bash
+cd /some/path/to/project_directory
+basename $(pwd)
+```
+
+Эту переменную можно переопределить в **.env** файле:
+
+```bash
+# Defaul setting COMPOSE_PROJECT_NAME to the basename
+# Change this value to setup containers prefix name
+# COMPOSE_PROJECT_NAME=
+```
+
+Задания со *:
+
+- Создание docker-compose.override.yml, который позволяет изменять код приложений без пересборки docker образов и запускать ruby приложения в режиме отладки с двумя воркерамиы
+
+### 15.1 Что было сделано
+
+- Создан контейнер с none network driver, проверена конфигурация его сетевых интерфейсов
+
+- Создан контейнер с host network driver, проверена конфигурация его сетевых интерфейсов
+
+- Созданы контейнеры с bridge network driver, которым были присвоены сетевые алиасы
+
+- Созданы docker сети front_net (подключены контейнеры ui, post, comment), back_net (подключены контейнеры mongo, post, comment)
+
+- Проверена работа сетевого стека linux (net namespaces, iptables) при работе с docker
+
+- Установлен docker-compose, написан docker-compose.yml для автоматического создания и запуска docker ресурсов
+
+- Создан .env файл для настройки docker-compose через environment переменные (версии образов, префикс проекта и т. д.)
+
+- Создан docker-compose.override.yml позволяющий изменять код приложения без пересоздания образа и запускать puma сервер в режиме отладки. Соответственно, изменены Dockerfile в микросервисах comment, ui, post для поддержки docker-compose.override.yml
+
+### 15.2 Как запустить проект
+
+- Предполагается, что перед запуском проекта уже существует **docker-host** и имеет адрес **docker_host_ip**, а также установлен **docker-compose**
+
+```bash
+docker-machine ls
+NAME          ACTIVE   DRIVER   STATE     URL                       SWARM   DOCKER        ERRORS
+docker-host   *        google   Running   tcp://docker_host_ip:2376           v18.06.0-ce
+
+eval $(docker-machine env docker-host)
+```
+
+```bash
+cd src
+docker-compose up -d
+```
+
+### 15.3 Как проверить проект
+
+После запуска, reddit приложение будет доступно по адресу <http://docker_host_ip:9292>, при этом можно создать пост и оставить комментарий.
