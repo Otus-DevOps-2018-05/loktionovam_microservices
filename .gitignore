@@ -9,3 +9,4 @@ gce-service-account.json
 vault.key
 gce.py
 gce.ini
+__pycache__

@@ -1,2 +1,2 @@
 #!/bin/ash
-source venv/bin/activate && exec "$@"
+source "${APP_RUNTIME}"/venv/bin/activate && exec "$@"
