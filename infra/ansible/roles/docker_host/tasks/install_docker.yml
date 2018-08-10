@@ -38,3 +38,9 @@
     name: "{{ docker_host_user }}"
     groups: docker
     append: true
+
+# Ansible 2.6.2 failed with ERROR! Unexpected Exception,
+# this is probably a bug: 'StrategyModule' object has no attribute '_cond_not_supported_warn'
+# if we use "when: docker_host_user_group.changed" statement, so always reset ssh connection
+- name: Reset ssh connection to allow {{ docker_host_user }} use docker without sudo
+  meta: reset_connection
