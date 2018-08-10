@@ -32,3 +32,7 @@ variable "source_ranges" {
 variable "count" {
   default = 1
 }
+
+variable "size" {
+  default = 10
+}

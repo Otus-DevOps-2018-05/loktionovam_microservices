@@ -12,6 +12,16 @@ variable zone {
   default     = "europe-west1-b"
 }
 
+variable machine_type {
+  description = "Machine type"
+  default     = "n1-standard-1"
+}
+
+variable size {
+  description = "Boot disk size"
+  default = 10
+}
+
 variable public_key_path {
   description = "Path to the public key used for ssh access"
 }

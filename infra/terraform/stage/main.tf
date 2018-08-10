@@ -20,6 +20,7 @@ module "docker_host" {
   zone                   = "${var.zone}"
   docker_host_disk_image = "${var.docker_host_disk_image}"
   count                  = "${var.count}"
+  size                   = "${var.size}"
 }
 
 module "vpc" {

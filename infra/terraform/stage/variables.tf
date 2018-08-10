@@ -27,3 +27,7 @@ variable docker_host_disk_image {
 variable "count" {
   default = 1
 }
+
+variable "size" {
+  default = 10
+}

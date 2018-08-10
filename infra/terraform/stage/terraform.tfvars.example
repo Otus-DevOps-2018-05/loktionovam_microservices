@@ -7,3 +7,5 @@ private_key_path = "~/.ssh/docker-user"
 docker_host_disk_image = "docker-host-base"
 
 source_ranges = ["0.0.0.0/0"]
+
+size = 10

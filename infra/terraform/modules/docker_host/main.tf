@@ -6,7 +6,7 @@ provider "google" {
 
 resource "google_compute_instance" "docker_host" {
   name         = "${format("docker-host-%03d", count.index + 1)}"
-  machine_type = "n1-standard-1"
+  machine_type = "${var.machine_type}"
   zone         = "${var.zone}"
 
   tags  = ["docker-host"]
@@ -19,6 +19,7 @@ resource "google_compute_instance" "docker_host" {
   boot_disk {
     initialize_params {
       image = "${var.docker_host_disk_image}"
+      size = "${var.size}"
     }
   }
 
