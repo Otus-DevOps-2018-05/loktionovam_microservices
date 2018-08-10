@@ -47,3 +47,16 @@ resource "google_compute_firewall" "firewall_puma" {
   source_ranges = ["0.0.0.0/0"]
   target_tags   = ["docker-host"]
 }
+
+resource "google_compute_firewall" "firewall_web" {
+  name    = "allow-http-default"
+  network = "default"
+
+  allow {
+    protocol = "tcp"
+    ports    = ["80", "443"]
+  }
+
+  source_ranges = ["0.0.0.0/0"]
+  target_tags   = ["docker-host"]
+}
