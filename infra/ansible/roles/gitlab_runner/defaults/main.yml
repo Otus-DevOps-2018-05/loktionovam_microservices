@@ -30,6 +30,7 @@ gitlab_runner_docker_compose:
       restart: always
       volumes:
         - '{{ gitlab_runner_config_dir }}:/etc/gitlab-runner'
+        - /var/run/docker.sock:/var/run/docker.sock
       environment:
         - REGISTRATION_TOKEN={{ gitlab_runner_token }}
         - CI_SERVER_URL={{ gitlab_runner_coordinator_url }}
