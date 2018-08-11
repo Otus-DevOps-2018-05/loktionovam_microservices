@@ -21,4 +21,4 @@ test_integration_job:
 deploy_job:
   stage: deploy
   script:
-- echo 'Deploy'
+    - echo 'Deploy'
