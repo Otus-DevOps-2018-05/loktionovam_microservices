@@ -6,3 +6,4 @@
     - role: gitlab_omnibus
       vars:
         gitlab_hostname: "{{ ansible_ssh_host }}"
+        gitlab_domain: ""

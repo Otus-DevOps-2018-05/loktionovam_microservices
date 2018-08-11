@@ -3,7 +3,7 @@
 
 gitlab_hostname: "{{ inventory_hostname }}"
 gitlab_domain: localdomain
-gitlab_external_url: http://{{ gitlab_hostname }}.{{ gitlab_domain }}
+gitlab_external_url: http://{{ gitlab_hostname }}{{ (gitlab_domain == "") | ternary ('', '.') }}{{ gitlab_domain }}
 
 gitlab_dir: /srv/gitlab
 gitlab_config_dir: "{{ gitlab_dir }}/config"
