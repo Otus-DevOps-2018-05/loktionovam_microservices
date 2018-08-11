@@ -16,9 +16,12 @@ def test_gitlab_dirs(host, gitlab_dirs):
 
     assert f.is_directory
 
+@pytest.mark.parametrize("gitlab_ports", [
+    "tcp://80",
+    "tcp://443",
+    "tcp://2222"
+])
+def test_gitlab_ports(host, gitlab_ports):
+    p = host.socket(gitlab_ports)
 
-def test_gitlab_docker_compose_file(host):
-    f = host.file('/srv/gitlab/docker-compose.yml')
-
-    assert f.is_file
-    assert f.contains('image: gitlab/gitlab-ce:latest')
+    assert p.is_listening

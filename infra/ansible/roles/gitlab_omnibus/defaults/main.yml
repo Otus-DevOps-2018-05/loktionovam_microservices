@@ -11,18 +11,25 @@ gitlab_data_dir: "{{ gitlab_dir }}/data"
 gitlab_log_dir: "{{ gitlab_dir }}/logs"
 
 gitlab_docker_compose:
-  web:
-    image: 'gitlab/gitlab-ce:latest'
-    restart: always
-    hostname: '{{ gitlab_hostname }}'
-    environment:
-      GITLAB_OMNIBUS_CONFIG: |
-        external_url '{{ gitlab_external_url }}'
-    ports:
-      - '80:80'
-      - '443:443'
-      - '2222:22'
-    volumes:
-      - '{{ gitlab_config_dir }}:/etc/gitlab'
-      - '{{ gitlab_log_dir }}:/var/log/gitlab'
-      - '{{ gitlab_data_dir }}:/var/opt/gitlab'
+  version: '3'
+  services:
+    web:
+      image: 'gitlab/gitlab-ce:latest'
+      restart: always
+      hostname: '{{ gitlab_hostname }}'
+      healthcheck:
+        test: ["CMD", "curl", "--fail", "http://localhost"]
+        interval: 1m30s
+        timeout: 10s
+        retries: 3
+      environment:
+        GITLAB_OMNIBUS_CONFIG: |
+          external_url '{{ gitlab_external_url }}'
+      ports:
+        - '80:80'
+        - '443:443'
+        - '2222:22'
+      volumes:
+        - '{{ gitlab_config_dir }}:/etc/gitlab'
+        - '{{ gitlab_log_dir }}:/var/log/gitlab'
+        - '{{ gitlab_data_dir }}:/var/opt/gitlab'

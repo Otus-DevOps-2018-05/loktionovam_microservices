@@ -11,13 +11,12 @@
     - "{{ gitlab_log_dir }}"
   become: true
 
-
-- name: Create gitlab docker compose file
-  copy:
-    content: "{{ gitlab_docker_compose | to_yaml }}"
-    dest: "{{ gitlab_dir }}/docker-compose.yml"
-  become: true
-
 - name: Start gitlab
   docker_service:
-    project_src: "{{ gitlab_dir }}"
+    project_name: gitlab
+    definition: "{{ gitlab_docker_compose }}"
+
+- name: Check if gitlab container running
+  assert:
+    that:
+      - "web.gitlab_web_1.state.running"
