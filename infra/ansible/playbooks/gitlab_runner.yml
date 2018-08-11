@@ -1,0 +1,6 @@
+---
+- name: Install and register gitlab runner docker container
+  hosts: tag_docker-host
+
+  roles:
+    - role: gitlab_runner
