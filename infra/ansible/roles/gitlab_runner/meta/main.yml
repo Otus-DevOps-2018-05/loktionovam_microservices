@@ -1,0 +1,15 @@
+---
+galaxy_info:
+  author: Aleksandr Loktionov
+  description: gitlab runner role
+  company: none
+  license: BSD
+  min_ansible_version: 2.4
+  platforms:
+    - name: Ubuntu
+      versions:
+        - xenial
+  galaxy_tags:
+    - ci
+dependencies:
+  - docker_host
