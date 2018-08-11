@@ -10,3 +10,5 @@ vault.key
 gce.py
 gce.ini
 __pycache__
+.venv
+*.pyc
