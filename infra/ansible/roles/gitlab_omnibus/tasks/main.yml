@@ -1,0 +1,23 @@
+---
+# tasks file for gitlab
+
+- name: Create gitlab directories
+  file:
+    path: "{{ item }}"
+    state: directory
+  with_items:
+    - "{{ gitlab_config_dir }}"
+    - "{{ gitlab_data_dir }}"
+    - "{{ gitlab_log_dir }}"
+  become: true
+
+
+- name: Create gitlab docker compose file
+  copy:
+    content: "{{ gitlab_docker_compose | to_yaml }}"
+    dest: "{{ gitlab_dir }}/docker-compose.yml"
+  become: true
+
+- name: Start gitlab
+  docker_service:
+    project_src: "{{ gitlab_dir }}"
