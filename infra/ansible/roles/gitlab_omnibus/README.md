@@ -16,10 +16,10 @@ Role Variables
 ```yaml
 gitlab_hostname: "{{ inventory_hostname }}"
 gitlab_domain: localdomain
-gitlab_external_url: http://{{ gitlab_hostname }}.{{ gitlab_domain }}
+gitlab_external_url: http://{{ gitlab_hostname }}{{ (gitlab_domain == "") | ternary ('', '.') }}{{ gitlab_domain }}
 ```
 
-* Gilab volumes directory
+* Gitlab volumes directory
 
 ```yaml
 gitlab_dir: /srv/gitlab
@@ -28,7 +28,7 @@ gitlab_data_dir: "{{ gitlab_dir }}/data"
 gitlab_log_dir: "{{ gitlab_dir }}/logs"
 ```
 
-* docker-compose configuration variable which will be saved as docker-compose.yml file
+* docker-compose configuration variable which will be used by docker_service ansible module
 
 ```yaml
 gitlab_docker_compose:
