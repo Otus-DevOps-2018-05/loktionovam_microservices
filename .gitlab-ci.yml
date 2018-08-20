@@ -11,6 +11,13 @@ variables:
   DATABASE_URL: 'mongodb://mongo/user_posts'
 
 before_script:
+  - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
+  - eval $(ssh-agent -s)
+  - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add - > /dev/null
+  - mkdir -p ~/.ssh
+  - chmod 700 ~/.ssh
+  - echo "$SSH_PRIVATE_KEY" > ~/.ssh/docker-user
+  - echo "$SSH_PUBLIC_KEY" > ~/.ssh/docker-user.pub
   - cd reddit
   - bundle install
 
@@ -43,12 +50,22 @@ branch_review:
   stage: review
   script: echo "Deploy to $CI_ENVIRONMENT_SLUG"
   environment:
-    name: branch/$CI_COMMIT_REF_NAME
-    url: http://$CI_ENVIRONMENT_SLUG.example.com
+    name: branch/$CI_COMMIT_REF_SLUG
+    url: http://$CI_COMMIT_REF_SLUG.example.com
   only:
     - branches
   except:
     - master
+  script:
+    - cd infra/terraform
+    - terraform init
+    - terraform apply -auto-approve
+    - terraform import -var project=${GCP_PROJECT} module.storage-bucket.google_storage_bucket.default docker-tf-state-stage
+    - cd stage
+    - mv terraform.tfvars.example terraform.tfvars
+    - terraform init
+    - terraform workspace select $CI_COMMIT_REF_SLUG || terraform workspace new $CI_COMMIT_REF_SLUG
+    - terraform apply -var project=${GCP_PROJECT} -auto-approve
 
 staging:
   stage: stage
