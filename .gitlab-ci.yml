@@ -57,7 +57,7 @@ branch_review:
   except:
     - master
   script:
-    - cd infra/terraform
+    - cd "${CI_PROJECT_DIR}/infra/terraform"
     - terraform init
     - terraform apply -auto-approve
     - terraform import -var project=${GCP_PROJECT} module.storage-bucket.google_storage_bucket.default docker-tf-state-stage
