@@ -9,6 +9,14 @@ stages:
 
 variables:
   DATABASE_URL: 'mongodb://mongo/user_posts'
+  DEPLOY_REVIEW_HOST_CMD: 'docker run \
+  -e GOOGLE_APPLICATION_CREDENTIALS=/app/gcp-credentials.json \
+  -e GCP_PROJECT=${GCP_PROJECT} \
+  --mount type=bind,source="$(pwd)",target=/app \
+  --mount type=bind,source="${HOME}"/.ssh,target=/root/.ssh \
+  --workdir /app \
+  --entrypoint /app/gitlab-ci/${REVIEW_ACTION} \
+  -t hashicorp/terraform:light'
 
 before_script:
   - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
@@ -56,16 +64,12 @@ branch_review:
     - branches
   except:
     - master
+  variables:
+    REVIEW_ACTION: deploy-review-host.sh
   script:
-    - cd "${CI_PROJECT_DIR}/infra/terraform"
-    - terraform init
-    - terraform apply -auto-approve
-    - terraform import -var project=${GCP_PROJECT} module.storage-bucket.google_storage_bucket.default docker-tf-state-stage
-    - cd stage
-    - mv terraform.tfvars.example terraform.tfvars
-    - terraform init
-    - terraform workspace select $CI_COMMIT_REF_SLUG || terraform workspace new $CI_COMMIT_REF_SLUG
-    - terraform apply -var project=${GCP_PROJECT} -auto-approve
+    - cd "${CI_PROJECT_DIR}"
+    - echo "${GOOGLE_CREDENTIALS}" > gcp-credentials.json
+    - eval ${DEPLOY_REVIEW_HOST_CMD}
 
 staging:
   stage: stage
