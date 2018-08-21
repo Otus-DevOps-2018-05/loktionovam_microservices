@@ -9,30 +9,35 @@ stages:
 
 variables:
   DATABASE_URL: 'mongodb://mongo/user_posts'
+  IMAGE_TAG: ${DOCKER_REGISTRY_USER}/reddit:${CI_COMMIT_REF_SLUG}
 
-before_script:
-#  - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
-#  - eval $(ssh-agent -s)
-#  - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add - > /dev/null
-  - mkdir -p ~/.ssh
-  - chmod 700 ~/.ssh
-  - echo "$SSH_PRIVATE_KEY" > ~/.ssh/docker-user
-  - echo "$SSH_PUBLIC_KEY" > ~/.ssh/docker-user.pub
-#  - cd reddit
-#  - bundle install
+build_job:
+  stage: build
+  image: docker:stable
+  variables:
+    DOCKER_HOST: tcp://docker:2375/
+    DOCKER_DRIVER: overlay2
+  services:
+    - docker:dind
+  before_script:
+    - docker info
+  script:
+    - cd reddit
+    - docker build -t "${IMAGE_TAG}" .
+    - docker login --username="${DOCKER_REGISTRY_USER}" --password="${DOCKER_REGISTRY_PASSWORD}"
+    - docker push "${IMAGE_TAG}"
 
-# build_job:
-#   stage: build
-#   script:
-#     - echo 'Building'
-# 
-# test_unit_job:
-#   stage: test
-#   services:
-#     - mongo:latest
-#   script:
-#     - ruby simpletest.rb
-# 
+test_unit_job:
+  stage: test
+  services:
+    - mongo:latest
+  before_script:
+    - cd reddit
+    - bundle update
+    - bundle install
+  script:
+    - ruby simpletest.rb
+
 # test_integration_job:
 #   stage: test
 #   script:
@@ -49,8 +54,8 @@ before_script:
 branch_start_review:
   stage: review
   environment:
-    name: branch/$CI_COMMIT_REF_SLUG
-    url: http://$CI_COMMIT_REF_SLUG.example.com
+    name: branch/${CI_COMMIT_REF_SLUG}
+    url: http://${CI_COMMIT_REF_SLUG}.example.com
     on_stop: branch_stop_review
   only:
     - branches
@@ -61,6 +66,8 @@ branch_start_review:
     entrypoint: [""]
   variables:
     GOOGLE_APPLICATION_CREDENTIALS: "${CI_PROJECT_DIR}/gcp-credentials.json"
+  before_script:
+    - gitlab-ci/setup-ssh.sh
   script:
     - gitlab-ci/deploy-review-host.sh
 
@@ -68,8 +75,8 @@ branch_stop_review:
   stage: review
   when: manual
   environment:
-    name: branch/$CI_COMMIT_REF_SLUG
-    url: http://$CI_COMMIT_REF_SLUG.example.com
+    name: branch/${CI_COMMIT_REF_SLUG}
+    url: http://${CI_COMMIT_REF_SLUG}.example.com
     action: stop
   only:
     - branches

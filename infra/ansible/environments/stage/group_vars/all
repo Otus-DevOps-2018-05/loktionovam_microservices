@@ -1,3 +1,4 @@
 ---
 
 env: stage
+gitlab_runner_docker_privileged: true

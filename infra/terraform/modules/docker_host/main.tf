@@ -9,7 +9,7 @@ resource "google_compute_instance" "docker_host" {
   machine_type = "${var.machine_type}"
   zone         = "${var.zone}"
 
-  tags  = ["docker-host"]
+  tags  = ["docker-host", "docker-host-${terraform.workspace}"]
   count = "${var.count}"
 
   metadata {
