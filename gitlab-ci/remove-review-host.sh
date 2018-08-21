@@ -8,4 +8,6 @@ cd stage
 mv terraform.tfvars.example terraform.tfvars
 terraform init
 terraform workspace select $CI_COMMIT_REF_SLUG || terraform workspace new $CI_COMMIT_REF_SLUG
-terraform apply -var project=${GCP_PROJECT} -auto-approve
+terraform destroy -var project=${GCP_PROJECT} -auto-approve
+terraform workspace select default
+terraform workspace delete $CI_COMMIT_REF_SLUG

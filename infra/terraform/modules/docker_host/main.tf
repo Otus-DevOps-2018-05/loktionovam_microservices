@@ -5,7 +5,7 @@ provider "google" {
 }
 
 resource "google_compute_instance" "docker_host" {
-  name         = "${format("docker-host-%03d", count.index + 1)}"
+  name         = "${format("docker-host-${terraform.workspace}-%03d", count.index + 1)}"
   machine_type = "${var.machine_type}"
   zone         = "${var.zone}"
 
@@ -37,7 +37,7 @@ resource "google_compute_instance" "docker_host" {
 }
 
 resource "google_compute_firewall" "firewall_puma" {
-  name    = "allow-puma-default"
+  name    = "allow-puma-${terraform.workspace}"
   network = "default"
 
   allow {
@@ -50,7 +50,7 @@ resource "google_compute_firewall" "firewall_puma" {
 }
 
 resource "google_compute_firewall" "firewall_web" {
-  name    = "allow-http-default"
+  name    = "allow-http-${terraform.workspace}"
   network = "default"
 
   allow {

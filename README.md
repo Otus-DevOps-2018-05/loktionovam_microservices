@@ -446,3 +446,31 @@ ansible-playbook playbooks/gitlab_runner.yml
 git remote add gitlab http://<your-vm-ip>/homework/example.git
 git push gitlab gitlab-ci-1
 ```
+
+## Homework-17: Устройство Gitlab CI. Непрерывная поставка
+
+```bash
+# configure docker user ssh keypair. SSH_PRIVATE_KEY, SSH_PUBLIC_KEY
+```
+
+```bash
+# configure GCP_PROJECT, protect it
+```
+
+```bash
+# configure GOOGLE_CREDENTIALS variable in the GITLAB variables list and protect it (used by terraform)
+```
+
+```bash
+cd infra/terraform
+terraform init
+terraform import -var project=${GCP_PROJECT} module.storage-bucket.google_storage_bucket.default docker-tf-state-stage
+cd stage
+mv terraform.tfvars.example terraform.tfvars
+terraform init
+
+# configure terraform.tfvars.example->terraform.tfvars
+# add terraform workspace naming
+terraform workspace select $CI_COMMIT_REF_SLUG || terraform workspace new $CI_COMMIT_REF_SLUG
+
+```
