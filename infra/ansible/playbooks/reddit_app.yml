@@ -2,11 +2,5 @@
 - name: Run reddit docker container
   hosts: tag_docker-host
 
-  tasks:
-
-    - name: Run reddit application container
-      docker_container:
-        name: reddit-app
-        image: loktionovam/otus-reddit:1.0
-        ports:
-          - "9292:9292"
+  roles:
+     - role: reddit_monolith
