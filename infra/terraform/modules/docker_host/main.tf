@@ -51,16 +51,31 @@ resource "null_resource" "app" {
     private_key = "${file(var.private_key_path)}"
   }
 
+  provisioner "remote-exec" {
+    inline = [
+      "while fuser /var/lib/dpkg/lock ; do echo 'dpkg locked, waiting...'; sleep 3;done",
+    ]
+  }
   provisioner "local-exec" {
     command     = "ansible-playbook playbooks/gce_dynamic_inventory_setup.yml --extra-vars='env=${var.environment}'"
+    working_dir = "../../ansible"
+
+    environment {
+      ANSIBLE_CONFIG = "./ansible.cfg"
+    }
+  }
+
+  provisioner "local-exec" {
+    command     = "environments/${var.environment}/gce.py --refresh-cache >/dev/null 2>&1"
     working_dir = "../../ansible"
   }
 
   provisioner "local-exec" {
     command     = "ansible-playbook -l ${google_compute_address.app_ip.address} --private-key ${var.private_key_path} playbooks/reddit_app.yml"
     working_dir = "../../ansible"
+
     environment {
-      ANSIBLE_CONFIG = "./ansible.cfg"
+      ANSIBLE_CONFIG      = "./ansible.cfg"
     }
   }
 }

@@ -6,7 +6,8 @@ reddit_monolith_docker_registry_user: "{{ mandatory }}"
 reddit_monolith_docker_version: latest
 
 reddit_monolith_docker_image: "{{ reddit_monolith_docker_registry_user }}/reddit:{{ reddit_monolith_docker_version }}"
-reddit_monolith_port: 9292
+reddit_monolith_app_port: 9292
+reddit_monolit_db_port: 27017
 
 reddit_monolith_docker_compose:
   version: '3'
@@ -21,12 +22,12 @@ reddit_monolith_docker_compose:
       image: "{{ reddit_monolith_docker_image }}"
       restart: always
       ports:
-        - "{{ reddit_monolith_port }}:{{ reddit_monolith_port }}/tcp"
+        - "{{ reddit_monolith_app_port }}:{{ reddit_monolith_app_port }}/tcp"
       networks:
         - back_net
         - front_net
       environment:
-        DATABASE_URL: 'post_db://mongo/user_posts'
+        DATABASE_URL: 'post_db:{{ reddit_monolit_db_port }}'
   volumes:
     post_db:
   networks:

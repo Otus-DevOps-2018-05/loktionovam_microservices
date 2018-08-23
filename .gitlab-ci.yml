@@ -10,7 +10,7 @@ stages:
 variables:
   DATABASE_URL: 'mongodb://mongo/user_posts'
   IMAGE_TAG: ${DOCKER_REGISTRY_USER}/reddit:${CI_COMMIT_REF_SLUG}
-  TERRAFORM_IMAGE_TAG: ${DOCKER_REGISTRY_USER}/terraform_ansible:${CI_COMMIT_REF_SLUG}
+  PROVISION_IMAGE_TAG: ${DOCKER_REGISTRY_USER}/app_provision:${CI_COMMIT_REF_SLUG}
 
 build_job:
   stage: build
@@ -26,8 +26,8 @@ build_job:
     - docker build -t "${IMAGE_TAG}" reddit/
     - docker login --username="${DOCKER_REGISTRY_USER}" --password="${DOCKER_REGISTRY_PASSWORD}"
     - docker push "${IMAGE_TAG}"
-    - docker build -t "${TERRAFORM_IMAGE_TAG}" infra/terraform/
-    - docker push "${TERRAFORM_IMAGE_TAG}"
+    - docker build -t "${PROVISION_IMAGE_TAG}" infra/terraform/
+    - docker push "${PROVISION_IMAGE_TAG}"
 
 test_unit_job:
   stage: test
@@ -40,18 +40,10 @@ test_unit_job:
   script:
     - ruby simpletest.rb
 
-# test_integration_job:
-#   stage: test
-#   script:
-#     - echo 'Testing 2'
-# 
-# deploy_dev_job:
-#   stage: review
-#   script:
-#     - echo 'Deploy'
-#   environment:
-#     name: dev
-#     url: http://dev.example.com
+test_integration_job:
+  stage: test
+  script:
+    - echo 'Testing 2'
 
 branch_start_review:
   stage: review
@@ -64,7 +56,7 @@ branch_start_review:
   except:
     - master
   image:
-    name: "${TERRAFORM_IMAGE_TAG}"
+    name: "${PROVISION_IMAGE_TAG}"
     entrypoint: [""]
   variables:
     GOOGLE_APPLICATION_CREDENTIALS: "${CI_PROJECT_DIR}/gcp-credentials.json"
@@ -85,7 +77,7 @@ branch_stop_review:
   except:
     - master
   image:
-    name: "${TERRAFORM_IMAGE_TAG}"
+    name: "${PROVISION_IMAGE_TAG}"
     entrypoint: [""]
   variables:
     GOOGLE_APPLICATION_CREDENTIALS: "${CI_PROJECT_DIR}/gcp-credentials.json"
