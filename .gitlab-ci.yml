@@ -23,11 +23,11 @@ build_job:
   before_script:
     - docker info
   script:
-    - cd reddit
-    - docker build -t "${IMAGE_TAG}" .
+    - docker build -t "${IMAGE_TAG}" reddit/
     - docker login --username="${DOCKER_REGISTRY_USER}" --password="${DOCKER_REGISTRY_PASSWORD}"
     - docker push "${IMAGE_TAG}"
-    - docker build -t "${TERRAFORM_IMAGE_TAG}" infra/terraform
+    - docker build -t "${TERRAFORM_IMAGE_TAG}" infra/terraform/
+    - docker push "${TERRAFORM_IMAGE_TAG}"
 
 test_unit_job:
   stage: test
