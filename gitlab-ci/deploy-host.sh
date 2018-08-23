@@ -16,4 +16,5 @@ cd "${ENVIRONMENT}"
 mv terraform.tfvars.example terraform.tfvars
 terraform init
 terraform workspace select $CI_COMMIT_REF_SLUG || terraform workspace new $CI_COMMIT_REF_SLUG
+terraform taint -module=docker_host null_resource.app || true
 terraform apply -var project=${GCP_PROJECT} -auto-approve
