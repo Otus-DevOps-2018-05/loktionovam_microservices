@@ -10,6 +10,7 @@ stages:
 variables:
   DATABASE_URL: 'mongodb://mongo/user_posts'
   IMAGE_TAG: ${DOCKER_REGISTRY_USER}/reddit:${CI_COMMIT_REF_SLUG}
+  TERRAFORM_IMAGE_TAG: ${DOCKER_REGISTRY_USER}/terraform_ansible:${CI_COMMIT_REF_SLUG}
 
 build_job:
   stage: build
@@ -26,6 +27,7 @@ build_job:
     - docker build -t "${IMAGE_TAG}" .
     - docker login --username="${DOCKER_REGISTRY_USER}" --password="${DOCKER_REGISTRY_PASSWORD}"
     - docker push "${IMAGE_TAG}"
+    - docker build -t "${TERRAFORM_IMAGE_TAG}" infra/terraform
 
 test_unit_job:
   stage: test
@@ -62,7 +64,7 @@ branch_start_review:
   except:
     - master
   image:
-    name: hashicorp/terraform:light
+    name: "${TERRAFORM_IMAGE_TAG}"
     entrypoint: [""]
   variables:
     GOOGLE_APPLICATION_CREDENTIALS: "${CI_PROJECT_DIR}/gcp-credentials.json"
@@ -83,7 +85,7 @@ branch_stop_review:
   except:
     - master
   image:
-    name: hashicorp/terraform:light
+    name: "${TERRAFORM_IMAGE_TAG}"
     entrypoint: [""]
   variables:
     GOOGLE_APPLICATION_CREDENTIALS: "${CI_PROJECT_DIR}/gcp-credentials.json"
