@@ -59,6 +59,9 @@ resource "null_resource" "app" {
   provisioner "local-exec" {
     command     = "ansible-playbook -l ${google_compute_address.app_ip.address} --private-key ${var.private_key_path} playbooks/reddit_app.yml"
     working_dir = "../../ansible"
+    environment {
+      ANSIBLE_CONFIG = "./ansible.cfg"
+    }
   }
 }
 
