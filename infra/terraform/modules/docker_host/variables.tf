@@ -42,3 +42,7 @@ variable "app_provision_enabled" {
   description = "Enable/disable reddit app provision switch"
   default     = true
 }
+
+variable "environment" {
+  description = "Used environment in the ansible provision"
+}

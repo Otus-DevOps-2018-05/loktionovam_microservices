@@ -52,7 +52,13 @@ resource "null_resource" "app" {
   }
 
   provisioner "local-exec" {
-    command = "cd ../../ansible/ && ansible-playbook -l ${google_compute_address.app_ip.address} --private-key ${var.private_key_path} playbooks/reddit_app.yml"
+    command     = "ansible-playbook playbooks/gce_dynamic_inventory_setup.yml --extra-vars='env=${var.environment}'"
+    working_dir = "../../ansible"
+  }
+
+  provisioner "local-exec" {
+    command     = "ansible-playbook -l ${google_compute_address.app_ip.address} --private-key ${var.private_key_path} playbooks/reddit_app.yml"
+    working_dir = "../../ansible"
   }
 }
 

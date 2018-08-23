@@ -71,7 +71,7 @@ branch_start_review:
   before_script:
     - gitlab-ci/setup-ssh.sh
   script:
-    - gitlab-ci/deploy-review-host.sh
+    - gitlab-ci/deploy-host.sh stage
 
 branch_stop_review:
   stage: review
@@ -92,7 +92,7 @@ branch_stop_review:
   before_script:
     - gitlab-ci/setup-ssh.sh
   script:
-    - gitlab-ci/remove-review-host.sh
+    - gitlab-ci/remove-host.sh stage
 
 staging:
   stage: stage
