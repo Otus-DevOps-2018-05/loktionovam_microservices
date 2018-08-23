@@ -36,3 +36,8 @@ variable "count" {
 variable "size" {
   default = 10
 }
+
+variable "app_provision_enabled" {
+  description = "Enable/disable reddit app provision switch"
+  default     = true
+}

@@ -19,7 +19,7 @@ variable machine_type {
 
 variable size {
   description = "Boot disk size"
-  default = 10
+  default     = 10
 }
 
 variable public_key_path {
@@ -36,4 +36,9 @@ variable docker_host_disk_image {
 
 variable "count" {
   default = 1
+}
+
+variable "app_provision_enabled" {
+  description = "Enable/disable reddit app provision switch"
+  default     = true
 }

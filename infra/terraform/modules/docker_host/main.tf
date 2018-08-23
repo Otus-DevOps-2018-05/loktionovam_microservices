@@ -19,13 +19,16 @@ resource "google_compute_instance" "docker_host" {
   boot_disk {
     initialize_params {
       image = "${var.docker_host_disk_image}"
-      size = "${var.size}"
+      size  = "${var.size}"
     }
   }
 
   network_interface {
-    network       = "default"
-    access_config = {}
+    network = "default"
+
+    access_config = {
+      nat_ip = "${google_compute_address.app_ip.address}"
+    }
   }
 
   connection {
@@ -34,6 +37,27 @@ resource "google_compute_instance" "docker_host" {
     agent       = false
     private_key = "${file(var.private_key_path)}"
   }
+}
+
+resource "null_resource" "app" {
+  count = "${var.app_provision_enabled ? 1 : 0}"
+
+  connection {
+    type = "ssh"
+
+    host        = "${google_compute_address.app_ip.address}"
+    user        = "docker-user"
+    agent       = false
+    private_key = "${file(var.private_key_path)}"
+  }
+
+  provisioner "local-exec" {
+    command = "cd ../../ansible/ && ansible-playbook -l ${google_compute_address.app_ip.address} --private-key ${var.private_key_path} playbooks/reddit_app.yml"
+  }
+}
+
+resource "google_compute_address" "app_ip" {
+  name = "reddit-app-ip-${terraform.workspace}"
 }
 
 resource "google_compute_firewall" "firewall_puma" {

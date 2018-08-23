@@ -21,6 +21,7 @@ module "docker_host" {
   docker_host_disk_image = "${var.docker_host_disk_image}"
   count                  = "${var.count}"
   size                   = "${var.size}"
+  app_provision_enabled  = "${var.app_provision_enabled}"
 }
 
 module "vpc" {
