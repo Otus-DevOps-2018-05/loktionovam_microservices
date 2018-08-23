@@ -8,7 +8,7 @@ fi
 # Credentials used by terraform
 echo "${CI_GOOGLE_CREDENTIALS}" > gcp-credentials.json
 # Credentials used by ansible
-echo "${CI_GOOGLE_CREDENTIALS}" > "infra/ansible/environments/${ENVIRONMENT}/gce-service-account.json"
+echo "${GCE_SERVICE_ACCOUNT}" > "infra/ansible/environments/${ENVIRONMENT}/gce-service-account.json"
 cd gitlab-ci/terraform
 terraform init
 terraform apply -var project=${GCP_PROJECT} -auto-approve || terraform import -var project=${GCP_PROJECT} module.storage-bucket.google_storage_bucket.default docker-tf-state-"${ENVIRONMENT}"
