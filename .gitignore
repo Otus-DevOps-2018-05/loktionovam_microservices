@@ -12,3 +12,4 @@ gce.ini
 __pycache__
 .venv
 *.pyc
+.env
