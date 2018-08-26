@@ -48,7 +48,7 @@ test_integration_job:
 branch_start_review:
   stage: review
   environment:
-    name: branch/${CI_COMMIT_REF_SLUG}
+    name: branch/${CI_COMMIT_REF_NAME}
     url: http://${CI_COMMIT_REF_SLUG}.example.com
     on_stop: branch_stop_review
   only:
@@ -69,7 +69,7 @@ branch_stop_review:
   stage: review
   when: manual
   environment:
-    name: branch/${CI_COMMIT_REF_SLUG}
+    name: branch/${CI_COMMIT_REF_NAME}
     url: http://${CI_COMMIT_REF_SLUG}.example.com
     action: stop
   only:
