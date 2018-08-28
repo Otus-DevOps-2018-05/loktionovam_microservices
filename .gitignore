@@ -1,0 +1,11 @@
+**/packer/variables.json
+*.tfstate
+*.tfstate.*.backup
+*.tfstate.backup
+*.tfvars
+.terraform/
+*.retry
+gce-service-account.json
+vault.key
+gce.py
+gce.ini

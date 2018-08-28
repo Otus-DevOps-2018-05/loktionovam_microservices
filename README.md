@@ -34,7 +34,7 @@ loktionovam microservices repository
 
 ```json
 
-        "Container": "b8fc5d0067d0ebc04a61b579250dc1753597e75fcc7554b2bebb6aefeb7abcdd",
+        "Container": "b8fc5d0067d0ebc04a61b579250dc1753597e75fcc7554b2bebb6aefeb7abcp "${REPO_PATH}"/",
         "ContainerConfig": {
             "Hostname": "b8fc5d0067d0",
 ```
@@ -59,3 +59,153 @@ loktionovam microservices repository
 ```
 
 Контейнеры это про runtime+r/w слой, images - это про хранение/доставку приложений.
+
+## Homework-13: Docker контейнеры. Docker под капотом
+
+### 13.1 Что было сделано
+
+Основные задания:
+
+- Создание docker host в GCP через docker machine
+
+- Создание образа docker контейнера otus-reddit:1.0
+
+- Создание репозитория на docker hub и загрузка в него образа otus-reddit:1.0
+
+Задания со *:
+
+- В docker-monolith/infra/ansible добавлена конфигурация ansible для настройки docker host (роль docker_host) и настроено dynamic inventory через gce.py
+
+- В docker-monolith/infra/packer добавлена конфигурация для создания образа с уже установленным docker
+
+- В docker-monolith/infra/terraform добавлена конфигурация для подъема инстансов docker-host-xxx, количество которых, задается переменной count
+
+
+### 13.2 Как запустить проект
+
+### 13.2.1 Шпаргалка по командам docker, docker machine. Создание образа otus-reddit
+
+```bash
+docker-machine create --driver google  --google-machine-image https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/family/ubuntu-1604-lts  --google-machine-type n1-standard-1   --google-zone europe-west1-b  docker-host
+
+docker-machine ls
+
+docker-machine env docker-host
+export DOCKER_TLS_VERIFY="1"
+export DOCKER_HOST="tcp://ip:port"
+export DOCKER_CERT_PATH="/some/path/to/.docker/machine/machines/docker-host"
+export DOCKER_MACHINE_NAME="docker-host"
+# Run this command to configure your shell:
+# eval $(docker-machine env docker-host)
+
+eval $(docker-machine env docker-host)
+
+# Запустить htop (PID из container namespaces)
+docker run --rm -ti tehbilly/htop
+
+# Запустить htop (PID из host namspaces)
+docker run --rm --pid host -ti tehbilly/htop
+
+docker run --help | grep "\-\-pid "
+      --pid string                     PID namespace to use
+
+
+# -t - tag (--tag=)
+docker build -t reddit:latest .
+
+# -d background mode (--detach=true)
+# --network - use host network
+docker run --name reddit -d --network=host reddit:latest
+
+# Создать  tag алиас на reddit:latest
+docker tag reddit:latest loktionovam/otus-reddit:1.0
+# Запушить образ в docker registy
+docker login
+docker push loktionovam/otus-reddit:1.0
+
+# Запустить существующий контейнер
+docker stop reddit
+docker start reddit
+
+# Логи
+docker logs reddit -f
+
+# Запустить bash
+docker exec -it reddit bash
+
+# Удалить контейнер
+docker rm reddit
+
+# Запуск контейнера без запуска приложения
+docker run --name reddit --rm  -it loktionovam/otus-reddit:1.0 bash
+root@96aba478ca67:/# ps ax | grep start
+   16 pts/0    S+     0:00 grep --color=auto start
+
+# Полная информация об образе
+docker inspect loktionovam/otus-reddit:1.0 
+
+# Часть информации об образе
+docker inspect loktionovam/otus-reddit:1.0 -f '{{.ContainerConfig.Cmd}}'
+[/bin/sh -c #(nop)  CMD ["/start.sh"]]
+
+#Вывод списка измененных файлов и каталогов в контейнере
+docker diff reddit
+```
+
+### 13.2.2 Настройка infra. Подготовительные действия - создание ssh ключей и сервисного аккаунта в GCP
+
+```bash
+export REPO_PATH=$(pwd)
+export GCP_PROJECT=docker-project-name-here
+ssh-keygen -t rsa -f ~/.ssh/docker-user -C 'docker-user' -q -N ''
+
+gcloud iam service-accounts create docker-user --display-name docker-user
+
+gcloud projects add-iam-policy-binding "${GCP_PROJECT}" --member serviceAccount:docker-user@"${GCP_PROJECT}".iam.gserviceaccount.com --role roles/editor
+```
+
+### 13.2.2 Настройка infra. Создание образа docker-host-base с помощью packer
+
+```bash
+# Создание образа хоста с предустановленным docker engine
+cd "${REPO_PATH}"/docker-monolith/infra
+packer build -var-file=packer/variables.json packer/docker_host.json
+```
+
+### 13.2.3 Настройка infra. Создание инстансов docker host через Terraform
+
+```bash
+cd "${REPO_PATH}"/docker-monolith/infra/terraform
+# Перед выполением команд нужно настроить terrafrom.tfvars файл для создания remote backend
+terraform init
+terraform apply
+
+cd "${REPO_PATH}"/stage
+# Перед выполением команд нужно настроить terrafrom.tfvars файл для создания инстансов docker host и правил файерволла
+terraform init
+terrafrom apply
+```
+
+### 13.2.2 Настройка infra. Запуск reddit app
+
+```bash
+cd "${REPO_PATH}"/docker-monolith/infra/ansible
+# Скопировать файл с секретными данными от service account
+gcloud iam service-accounts keys create environments/stage/gce-service-account.json --iam-account docker-user@"${GCP_PROJECT}".iam.gserviceaccount.com
+
+# Настроить gce dynamic inventory
+ansible-playbook playbooks/gce_dynamic_inventory_setup.yml
+
+# Развернуть reddit app на инстансах созданных ранее, через terraform
+ansible-playbook playbooks/site.yml
+```
+
+### 13.3 Как проверить проект
+
+- Приложение будет доступно в веб-браузере по адресу http://ip_address:9292, где список ip_address можно узнать командами
+
+```bash
+# Получить список всех ip адресов
+cd "${REPO_PATH}"/docker-monolith/infra/terraform/stage
+terraform output
+```
