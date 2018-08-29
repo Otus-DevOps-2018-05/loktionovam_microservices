@@ -25,7 +25,7 @@ services:
       - front_net
       - back_net
   prometheus:
-    image: ${USER_NAME}/prometheus
+    image: ${USER_NAME}/prometheus:${PROMETHEUS_VERSION}
     ports:
       - '9090:9090'
     volumes:
@@ -49,6 +49,13 @@ services:
       - '--collector.filesystem.ignored-mount-points="^/(sys|proc|dev|host|etc)($$|/)"'
     networks:
       - front_net
+  mongodb_exporter:
+    image: loktionovam/mongodb_exporter:${MONGODB_EXPORTER_VERSION}
+    environment:
+      - MONGODB_URL='mongodb://comment_db:27017'
+    networks:
+      - front_net
+      - back_net
 volumes:
   post_db:
   prometheus_data:
