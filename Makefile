@@ -109,11 +109,11 @@ blackbox_exporter: blackbox_exporter_build blackbox_exporter_push
 
 up: build
 	@echo ">> Create and start microservices via docker compose"
-	@cd docker/microservices; docker-compose up -d
+	@cd docker; docker-compose up -d
 
 down:
 	@echo ">> Stop and remove containers, networks, images, and volumes via docker compose"
-	@cd docker/microservices; docker-compose down
+	@cd docker; docker-compose down
 
 
 .PHONY: all build push up down\
