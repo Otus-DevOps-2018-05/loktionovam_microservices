@@ -30,8 +30,13 @@ BLACKBOX_EXPORTER_DOCKER_IMAGE_NAME ?= blackbox_exporter
 BLACKBOX_EXPORTER_DOCKER_IMAGE_TAG ?= $(shell ./get_dockerfile_version.sh $(BLACKBOX_EXPORTER_DOCKER_DIR)/Dockerfile)
 BLACKBOX_EXPORTER_DOCKER_IMAGE ?= $(DOCKER_REGISTRY_USER)/$(BLACKBOX_EXPORTER_DOCKER_IMAGE_NAME):$(BLACKBOX_EXPORTER_DOCKER_IMAGE_TAG)
 
-build: ui_build post_build comment_build prometheus_build mongodb_exporter_build blackbox_exporter_build
-push: ui_push post_push comment_push prometheus_push mongodb_exporter_push blackbox_exporter_push
+build_reddit: ui_build post_build comment_build
+build_monitoring: prometheus_build mongodb_exporter_build blackbox_exporter_build
+build: build_reddit build_monitoring
+
+push_reddit: ui_push post_push comment_push
+push_monitoring: prometheus_push mongodb_exporter_push blackbox_exporter_push
+push:  push_reddit push_monitoring
 
 all: build push
 
@@ -107,16 +112,27 @@ blackbox_exporter_push:
 
 blackbox_exporter: blackbox_exporter_build blackbox_exporter_push
 
-up: build
+up_reddit: build_reddit
 	@echo ">> Create and start microservices via docker compose"
 	@cd docker; docker-compose up -d
 
-down:
+up_monitoring: build_monitoring
+	@echo ">> Create and start monitoring microservices via docker compose"
+	@cd docker; docker-compose -f docker-compose-monitoring.yml up -d
+
+down_reddit:
 	@echo ">> Stop and remove containers, networks, images, and volumes via docker compose"
 	@cd docker; docker-compose down
 
+down_monitoring:
+	@echo ">> Stop and remove containers monitoring via docker compose"
+	@cd docker; docker-compose -f docker-compose-monitoring.yml down
 
-.PHONY: all build push up down\
+up: up_reddit up_monitoring
+
+down: down_monitoring down_reddit
+
+.PHONY: all build push up down up_monitoring up_reddit down_monitoring down_reddit build_reddit build_monitoring\
 ui_build ui_push ui \
 post_build post_push post \
 comment_build comment_push comment \
