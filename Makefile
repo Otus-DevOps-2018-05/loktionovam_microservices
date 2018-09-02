@@ -30,13 +30,18 @@ BLACKBOX_EXPORTER_DOCKER_IMAGE_NAME ?= blackbox_exporter
 BLACKBOX_EXPORTER_DOCKER_IMAGE_TAG ?= $(shell ./get_dockerfile_version.sh $(BLACKBOX_EXPORTER_DOCKER_DIR)/Dockerfile)
 BLACKBOX_EXPORTER_DOCKER_IMAGE ?= $(DOCKER_REGISTRY_USER)/$(BLACKBOX_EXPORTER_DOCKER_IMAGE_NAME):$(BLACKBOX_EXPORTER_DOCKER_IMAGE_TAG)
 
+ALERTMANAGER_DOCKER_DIR ?= monitoring/alertmanager
+ALERTMANAGER_DOCKER_IMAGE_NAME ?= alertmanager
+ALERTMANAGER_DOCKER_IMAGE_TAG ?= $(shell ./get_dockerfile_version.sh $(ALERTMANAGER_DOCKER_DIR)/Dockerfile)
+ALERTMANAGER_DOCKER_IMAGE ?= $(DOCKER_REGISTRY_USER)/$(ALERTMANAGER_DOCKER_IMAGE_NAME):$(ALERTMANAGER_DOCKER_IMAGE_TAG)
+
 build_reddit: ui_build post_build comment_build
-build_monitoring: prometheus_build mongodb_exporter_build blackbox_exporter_build
+build_monitoring: prometheus_build mongodb_exporter_build blackbox_exporter_build alertmanager_build
 build: build_reddit build_monitoring
 
 push_reddit: ui_push post_push comment_push
-push_monitoring: prometheus_push mongodb_exporter_push blackbox_exporter_push
-push:  push_reddit push_monitoring
+push_monitoring: prometheus_push mongodb_exporter_push blackbox_exporter_push alermanager_push
+push: push_reddit push_monitoring
 
 all: build push
 
@@ -112,6 +117,17 @@ blackbox_exporter_push:
 
 blackbox_exporter: blackbox_exporter_build blackbox_exporter_push
 
+alertmanager_build:
+	@echo ">> building docker image $(ALERTMANAGER_DOCKER_IMAGE)"
+	@cd "$(ALERTMANAGER_DOCKER_DIR)"; \
+	docker build -t $(ALERTMANAGER_DOCKER_IMAGE) .
+
+alermanager_push:
+	@echo ">> push $(ALERTMANAGER_DOCKER_IMAGE) docker image to dockerhub"
+	@docker push "$(ALERTMANAGER_DOCKER_IMAGE)"
+
+alertmanager: alertmanager_build alermanager_push
+
 up_reddit: build_reddit
 	@echo ">> Create and start microservices via docker compose"
 	@cd docker; docker-compose up -d
@@ -138,4 +154,6 @@ post_build post_push post \
 comment_build comment_push comment \
 prometheus prometheus_build prometheus_push \
 mongodb_exporter_build mongodb_exporter_push mongodb_exporter \
-blackbox_exporter blackbox_exporter_build blackbox_exporter_push
+blackbox_exporter blackbox_exporter_build blackbox_exporter_push \
+alertmanager alertmanager_build alermanager_push
+
