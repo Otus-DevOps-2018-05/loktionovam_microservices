@@ -209,3 +209,97 @@ ansible-playbook playbooks/site.yml
 cd "${REPO_PATH}"/docker-monolith/infra/terraform/stage
 terraform output
 ```
+
+## Homework-14: Docker образы. Микросервисы
+
+### 14.1 Что было сделано
+
+Основные задания:
+
+- Созданы docker образы для микросервисов comment, ui, post
+- Создана docker сеть для приложения reddit
+- Создан docker том для данных mongodb
+- Запущены контейнеры на основе созданных образов
+
+Задания со *:
+
+- Изменение сетевых алиасов, использование env переменных
+
+```bash
+# Пример решения
+docker run -d --network=reddit --network-alias=post_db_alias --network-alias=comment_db_alias mongo:latest
+docker run -d --network=reddit --network-alias=post_alias -e 'POST_DATABASE_HOST=post_db_alias' loktionovam/post:1.0
+docker run -d --network=reddit --network-alias=comment_alias -e 'COMMENT_DATABASE_HOST=comment_db_alias' loktionovam/comment:1.0
+docker run -d --network=reddit --network-alias=ui_alias -e 'POST_SERVICE_HOST=post_alias' -e 'COMMENT_SERVICE_HOST=comment_alias' loktionovam/ui:1.0
+```
+
+Задания со *:
+
+- Уменьшены размеры образов comment, ui, post
+
+```bash
+# Размеры образов ui
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+loktionovam/ui      3.2                 b92f70287088        11 seconds ago      34.5MB # alpine, multi-stage build, cache cleaning
+loktionovam/ui      3.1                 8e94d1738f8f        4 minutes ago       37.5MB # alpine, multi-stage build
+loktionovam/ui      3.0                 0054caafcade        14 minutes ago      210MB # alpine
+loktionovam/ui      2.0                 5f494c53de90        23 minutes ago      460MB # ubuntu 16.04
+loktionovam/ui      1.0                 1dc4afe3d94c        26 minutes ago      777MB # ruby 2.2
+```
+
+```bash
+# Размеры образов post
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+loktionovam/post    2.2                 e13a2539eef3        6 minutes ago       35.1MB # alpine:3.8, multi-stage build, venv packages cleaning, pyc files removing
+loktionovam/post    2.1                 a4978e47831e        13 minutes ago      57.5MB # alpine:3.8, multi-stage build, venv packages cleaning
+loktionovam/post    2.0                 324095723244        21 minutes ago      62.6MB # alpine:3.8, multi-stage build
+loktionovam/post    1.0                 228a932d5c0d        3 hours ago         102MB # python:3.6.0-alpine
+```
+
+```bash
+# Размеры образов comment
+REPOSITORY            TAG                 IMAGE ID            CREATED             SIZE
+loktionovam/comment   2.0                 d42d889bed54        18 seconds ago      30.1MB # alpine, multi-stage build, cache cleaning
+loktionovam/comment   1.0                 d1e034889328        4 hours ago         769MB # ruby 2.2
+```
+
+### 14.2 Как запустить проект
+
+- Предполагается, что перед запуском проекта уже существует **docker-host** и имеет адрес **docker_host_ip**
+
+```bash
+docker-machine ls
+NAME          ACTIVE   DRIVER   STATE     URL                       SWARM   DOCKER        ERRORS
+docker-host   *        google   Running   tcp://docker_host_ip:2376           v18.06.0-ce
+
+eval $(docker-machine env docker-host)
+```
+
+- Создание docker образов микросервисов comment, post, ui
+
+```bash
+cd src
+docker build -t loktionovam/comment:2.0  ./comment
+docker build -t loktionovam/post:2.2  ./post-py
+docker build -t loktionovam/ui:3.2  ./ui
+```
+
+- Запуск проекта
+
+```bash
+docker network create reddit
+docker volume create reddit_db
+
+docker run -d --network=reddit --network-alias=post_db \
+ --network-alias=comment_db -v reddit_db:/data/db mongo:latest
+
+docker run -d --network=reddit --network-alias=post loktionovam/post:2.2
+
+docker run -d --network=reddit --network-alias=comment loktionovam/comment:2.0
+
+docker run -d --network=reddit -p 9292:9292 loktionovam/ui:3.2
+```
+
+### 14.3 Как проверить проект
+
+После запуска, reddit приложение будет доступно по адресу <http://docker_host_ip:9292>, при этом можно создать пост и оставить комментарий.
