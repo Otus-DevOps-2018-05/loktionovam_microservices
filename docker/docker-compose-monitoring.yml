@@ -69,6 +69,14 @@ services:
       - 9093:9093
     networks:
       - front_net
+  telegraf:
+    image: ${USER_NAME}/telegraf:${TELEGRAF_VERSION}
+    ports:
+      - 9273:9273
+    networks:
+      - front_net
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
 volumes:
   prometheus_data:
   grafana_data:

@@ -602,3 +602,37 @@ make all
 ```
 
 После сборки и пуша, образы контейнеров будут доступны в dockerhub по ссылке: <https://hub.docker.com/r/loktionovam>
+
+## Homework-19: Мониторинг приложения и инфраструктуры
+
+Основное задание: мониторинг docker контейнеров; визуализация метрик; сборк метрик работы приложения и бизнес метрик; настройка и проверка алертинга
+
+Задание со *:
+
+<https://grafana.com/dashboards/1229>
+```bash
+# Docker native metrics
+curl http://172.17.0.1:9323/metrics 2>/dev/null| grep -E "^# " -v | wc -l
+339
+```
+
+```bash
+# Cadvisor metrics
+curl http://localhost:8080/metrics 2>/dev/null| grep -v "^# " | wc -l
+3950
+
+total: 58
+
+```
+
+```bash
+# telegraf docker metrics
+grep -v "#"  metrics  | grep docker | wc -l 
+926
+```
+
+### 19.1 Что было сделано
+
+### 19.2 Как запустить проект
+
+### 19.3 Как проверить проект

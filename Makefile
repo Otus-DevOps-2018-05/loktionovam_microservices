@@ -35,12 +35,17 @@ ALERTMANAGER_DOCKER_IMAGE_NAME ?= alertmanager
 ALERTMANAGER_DOCKER_IMAGE_TAG ?= $(shell ./get_dockerfile_version.sh $(ALERTMANAGER_DOCKER_DIR)/Dockerfile)
 ALERTMANAGER_DOCKER_IMAGE ?= $(DOCKER_REGISTRY_USER)/$(ALERTMANAGER_DOCKER_IMAGE_NAME):$(ALERTMANAGER_DOCKER_IMAGE_TAG)
 
+TELEGRAF_DOCKER_DIR ?= monitoring/telegraf
+TELEGRAF_DOCKER_IMAGE_NAME ?= telegraf
+TELEGRAF_DOCKER_IMAGE_TAG ?= $(shell ./get_dockerfile_version.sh $(TELEGRAF_DOCKER_DIR)/Dockerfile)
+TELEGRAF_DOCKER_IMAGE ?= $(DOCKER_REGISTRY_USER)/$(TELEGRAF_DOCKER_IMAGE_NAME):$(TELEGRAF_DOCKER_IMAGE_TAG)
+
 build_reddit: ui_build post_build comment_build
-build_monitoring: prometheus_build mongodb_exporter_build blackbox_exporter_build alertmanager_build
+build_monitoring: prometheus_build mongodb_exporter_build blackbox_exporter_build alertmanager_build telegraf_build
 build: build_reddit build_monitoring
 
 push_reddit: ui_push post_push comment_push
-push_monitoring: prometheus_push mongodb_exporter_push blackbox_exporter_push alermanager_push
+push_monitoring: prometheus_push mongodb_exporter_push blackbox_exporter_push alermanager_push telegraf_push
 push: push_reddit push_monitoring
 
 all: build push
@@ -128,6 +133,17 @@ alermanager_push:
 
 alertmanager: alertmanager_build alermanager_push
 
+telegraf_build:
+	@echo ">> building docker image $(TELEGRAF_DOCKER_IMAGE)"
+	@cd "$(TELEGRAF_DOCKER_DIR)"; \
+	docker build -t $(TELEGRAF_DOCKER_IMAGE) .
+
+telegraf_push:
+	@echo ">> push $(TELEGRAF_DOCKER_IMAGE) docker image to dockerhub"
+	@docker push "$(TELEGRAF_DOCKER_IMAGE)"
+
+telegraf: telegraf_build telegraf_push
+
 up_reddit: build_reddit
 	@echo ">> Create and start microservices via docker compose"
 	@cd docker; docker-compose up -d
@@ -155,5 +171,5 @@ comment_build comment_push comment \
 prometheus prometheus_build prometheus_push \
 mongodb_exporter_build mongodb_exporter_push mongodb_exporter \
 blackbox_exporter blackbox_exporter_build blackbox_exporter_push \
-alertmanager alertmanager_build alermanager_push
-
+alertmanager alertmanager_build alermanager_push \
+telegraf telegraf_build telegraf_push
