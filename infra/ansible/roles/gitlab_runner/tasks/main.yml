@@ -1,0 +1,33 @@
+---
+# tasks file for gitlab
+
+- name: Load gitlab runner token and coordinator url
+  include_vars: "{{ gitlab_runner_credentials }}"
+
+- name: Create gitlab runner directories
+  file:
+    path: "{{ item }}"
+    state: directory
+  with_items:
+    - "{{ gitlab_runner_config_dir }}"
+  become: true
+
+- name: Start gitlab runner {{ gitlab_runner_name }}
+  docker_service:
+    project_name: gitlab_runner
+    definition: "{{ gitlab_runner_docker_compose }}"
+
+- name: Check if gitlab runner container running
+  assert:
+    that:
+      - "runner.gitlab_runner_runner_1.state.running"
+
+- name: Get gitlab runner {{ gitlab_runner_name }} registration status
+  command: docker exec gitlab_runner_runner_1 gitlab-runner verify --name {{ gitlab_runner_name }}
+  register: gitlab_runner_registration_status
+  ignore_errors: true
+  changed_when: false
+
+- name: Register gitlab runner {{ gitlab_runner_name }}
+  command: docker exec gitlab_runner_runner_1 gitlab-runner register
+  when: not "Verifying runner... is alive" in gitlab_runner_registration_status.stderr

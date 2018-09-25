@@ -1,0 +1,22 @@
+---
+# tasks file for gitlab
+
+- name: Create gitlab directories
+  file:
+    path: "{{ item }}"
+    state: directory
+  with_items:
+    - "{{ gitlab_config_dir }}"
+    - "{{ gitlab_data_dir }}"
+    - "{{ gitlab_log_dir }}"
+  become: true
+
+- name: Start gitlab
+  docker_service:
+    project_name: gitlab
+    definition: "{{ gitlab_docker_compose }}"
+
+- name: Check if gitlab container running
+  assert:
+    that:
+      - "web.gitlab_web_1.state.running"

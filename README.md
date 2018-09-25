@@ -371,3 +371,78 @@ docker-compose up -d
 ### 15.3 Как проверить проект
 
 После запуска, reddit приложение будет доступно по адресу <http://docker_host_ip:9292>, при этом можно создать пост и оставить комментарий.
+
+## Homework-16: Gitlab CI. Построение процесса непрервыной интеграции
+
+Основные задания: подготовить инсталляцию Gitlab CI, подготовить репозиторий с кодом приложения, описать для приложения этапы непрервыной интеграции
+
+Задания со *: автоматизировать развертывание и регистрацию gitlab runner, добавить интеграцию pipeline со slack чатом
+
+### 16.1 Что было сделано
+
+- Добавлен boot disk size параметр в конфигурацию модуля docker_host в terraform, добавлена конфигурация файерволла для docker host в terraform
+
+- Добавлена поддержка docker compose для ansible роли docker_host
+
+- Пересобран packer образ для поддержки docker compose docker-host-base
+
+- Добавлена gitlab_omnibus ansible роль для автоматического развертывания сервера с gitlab, для роли написаны тесты с использованием molecula и testinfra, добавлен healthchek в конфигурацию docker compose
+
+- Добавлен gitlab_omnibus.yml плейбук для развертывания инстанса gitlab в GCP
+
+- Добавлена конфигурация пайплана gitlab
+
+- Добавлена gitlab_runner ansible роль для автоматического развертывания gitlab runner, для роли написаны тесты с использованием molecula и testinfra
+
+- Добавлен gitlab_runner.yml плейбук для автоматического развертывания и регистрации gitlab runner
+
+- Добавлено reddit приложение и тесты для него, настроен запуск тестов в gitlab CI/CD
+
+- Добавлена интеграция со slack чатом <https://devops-team-otus.slack.com/messages/CB4BAETU5/>
+
+### 16.2 Как запустить проект
+
+Предполагается, что уже существует конфигурация terraform настроенная в рамках выполнения **Homework-13**
+
+- Собрать новый образ docker-host-base с поддержкой docker compose через packer
+
+```bash
+cd infra
+packer build -var-file=packer/variables.json packer/docker_host.json
+```
+
+- Настроить boot size в terraform и переразвенуть docker хост
+
+```bash
+cd infra/terraform/stage
+# настроить size = 50 в terraform.tfvars
+# и пересоздать docker host
+terraform taint -module=docker_host google_compute_instance.docker_host
+terraform apply -auto-approve
+terraform output
+```
+
+- Установить gitlab сервер
+
+```bash
+cd gitlab-ci/ansible
+ansible-playbook playbooks/gitlab_omnibus.yml
+```
+
+- Настроить пользователя, проект и т. д. в gitlab сервере
+
+- Установить и зарегистрировать gitlab runner. Перед запуском плейбука необходимо настроить в `~/.ansible/gilab_runner_credentials.yml` переменные `gitlab_runner_token` и `gitlab_runner_coordinator_url`
+
+```bash
+cd gitlab-ci/ansible
+ansible-playbook playbooks/gitlab_runner.yml
+```
+
+### 16.3 Как проверить проект
+
+После настройки CI/CD в gitlab, можно запушить изменения и проверить, что статус пайплайна будет **passed**
+
+```bash
+git remote add gitlab http://<your-vm-ip>/homework/example.git
+git push gitlab gitlab-ci-1
+```
