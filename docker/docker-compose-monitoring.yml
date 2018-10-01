@@ -33,7 +33,7 @@ services:
       - front_net
       - back_net
   blackbox_exporter:
-    image: loktionovam/blackbox-exporter:v${BLACKBOX_EXPORTER_VERSION}
+    image: loktionovam/blackbox_exporter:${BLACKBOX_EXPORTER_VERSION}
     networks:
       - front_net
       - back_net
