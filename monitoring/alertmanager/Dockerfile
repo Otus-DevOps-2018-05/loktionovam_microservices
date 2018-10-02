@@ -1,3 +1,8 @@
 FROM prom/alertmanager:v0.14.0
 LABEL version="0.14.0"
-ADD config.yml /etc/alertmanager/
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+
+ENTRYPOINT [ "/docker-entrypoint.sh" ]
+CMD [ "/bin/alertmanager", \
+        "--config.file=/etc/alertmanager/config.yml", \
+        "--storage.path=/alertmanager" ]

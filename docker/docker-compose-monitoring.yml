@@ -63,12 +63,12 @@ services:
       - front_net
   alertmanager:
     image: ${USER_NAME}/alertmanager:${ALERTMANGER_VERSION}
-    command:
-      - '--config.file=/etc/alertmanager/config.yml'
     ports:
       - 9093:9093
     networks:
       - front_net
+    env_file:
+      - $HOME/.docker/alertmanager.secrets
   telegraf:
     image: ${USER_NAME}/telegraf:${TELEGRAF_VERSION}
     ports:
