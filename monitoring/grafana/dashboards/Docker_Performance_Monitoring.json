@@ -1,34 +1,4 @@
 {
-  "__inputs": [
-    {
-      "name": "DS_PROMETHEUS_SERVER",
-      "label": "Prometheus server",
-      "description": "",
-      "type": "datasource",
-      "pluginId": "prometheus",
-      "pluginName": "Prometheus"
-    }
-  ],
-  "__requires": [
-    {
-      "type": "grafana",
-      "id": "grafana",
-      "name": "Grafana",
-      "version": "5.0.0"
-    },
-    {
-      "type": "panel",
-      "id": "graph",
-      "name": "Graph",
-      "version": "5.0.0"
-    },
-    {
-      "type": "datasource",
-      "id": "prometheus",
-      "name": "Prometheus",
-      "version": "5.0.0"
-    }
-  ],
   "annotations": {
     "list": [
       {
@@ -45,7 +15,6 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 1,
-  "id": null,
   "links": [],
   "panels": [
     {
@@ -53,7 +22,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_PROMETHEUS_SERVER}",
+      "datasource": "Prometheus server",
       "fill": 1,
       "gridPos": {
         "h": 12,
@@ -136,7 +105,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_PROMETHEUS_SERVER}",
+      "datasource": "Prometheus server",
       "fill": 1,
       "gridPos": {
         "h": 12,
@@ -219,7 +188,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_PROMETHEUS_SERVER}",
+      "datasource": "Prometheus server",
       "fill": 1,
       "gridPos": {
         "h": 12,
@@ -302,7 +271,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_PROMETHEUS_SERVER}",
+      "datasource": "Prometheus server",
       "fill": 1,
       "gridPos": {
         "h": 12,
@@ -385,7 +354,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_PROMETHEUS_SERVER}",
+      "datasource": "Prometheus server",
       "fill": 1,
       "gridPos": {
         "h": 12,
@@ -468,7 +437,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_PROMETHEUS_SERVER}",
+      "datasource": "Prometheus server",
       "fill": 1,
       "gridPos": {
         "h": 12,
@@ -589,5 +558,5 @@
   "timezone": "",
   "title": "Docker container performance monitoring",
   "uid": "Tx2mpAhiz",
-  "version": 20
+  "version": 2
 }

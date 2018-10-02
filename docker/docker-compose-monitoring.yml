@@ -49,7 +49,7 @@ services:
     networks:
       - front_net
   grafana:
-    image: grafana/grafana:${GRAFANA_VERSION}
+    image: loktionovam/grafana:${GRAFANA_VERSION}
     volumes:
       - grafana_data:/var/lib/grafana
     environment:

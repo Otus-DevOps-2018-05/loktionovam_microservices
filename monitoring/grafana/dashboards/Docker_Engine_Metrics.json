@@ -1,49 +1,8 @@
 {
-  "__inputs": [
-    {
-      "name": "DS_PROMETHEUS_SERVER",
-      "label": "Prometheus server",
-      "description": "",
-      "type": "datasource",
-      "pluginId": "prometheus",
-      "pluginName": "Prometheus"
-    }
-  ],
-  "__requires": [
-    {
-      "type": "grafana",
-      "id": "grafana",
-      "name": "Grafana",
-      "version": "5.0.0"
-    },
-    {
-      "type": "panel",
-      "id": "graph",
-      "name": "Graph",
-      "version": "5.0.0"
-    },
-    {
-      "type": "datasource",
-      "id": "prometheus",
-      "name": "Prometheus",
-      "version": "5.0.0"
-    },
-    {
-      "type": "panel",
-      "id": "singlestat",
-      "name": "Singlestat",
-      "version": "5.0.0"
-    },
-    {
-      "type": "panel",
-      "id": "text",
-      "name": "Text",
-      "version": "5.0.0"
-    }
-  ],
   "annotations": {
     "list": [
       {
+        "$$hashKey": "object:313",
         "builtIn": 1,
         "datasource": "-- Grafana --",
         "enable": true,
@@ -58,8 +17,7 @@
   "editable": true,
   "gnetId": 1229,
   "graphTooltip": 0,
-  "id": null,
-  "iteration": 1535897638580,
+  "iteration": 1538507573154,
   "links": [],
   "panels": [
     {
@@ -75,6 +33,13 @@
       "links": [],
       "mode": "markdown",
       "repeat": "instance",
+      "scopedVars": {
+        "instance": {
+          "selected": false,
+          "text": "172.17.0.1:9323",
+          "value": "172.17.0.1:9323"
+        }
+      },
       "title": "$instance",
       "type": "text"
     },
@@ -87,7 +52,7 @@
         "rgba(237, 129, 40, 0.89)",
         "rgba(50, 172, 45, 0.97)"
       ],
-      "datasource": "${DS_PROMETHEUS_SERVER}",
+      "datasource": "Prometheus server",
       "description": "Number of CPUs",
       "format": "none",
       "gauge": {
@@ -132,6 +97,13 @@
         }
       ],
       "repeat": "instance",
+      "scopedVars": {
+        "instance": {
+          "selected": false,
+          "text": "172.17.0.1:9323",
+          "value": "172.17.0.1:9323"
+        }
+      },
       "sparkline": {
         "fillColor": "rgba(31, 118, 189, 0.18)",
         "full": false,
@@ -167,7 +139,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_PROMETHEUS_SERVER}",
+      "datasource": "Prometheus server",
       "description": "Measuring some percentiles performance",
       "fill": 1,
       "gridPos": {
@@ -198,6 +170,13 @@
       "points": false,
       "renderer": "flot",
       "repeat": "instance",
+      "scopedVars": {
+        "instance": {
+          "selected": false,
+          "text": "172.17.0.1:9323",
+          "value": "172.17.0.1:9323"
+        }
+      },
       "seriesOverrides": [],
       "spaceLength": 10,
       "stack": false,
@@ -277,7 +256,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_PROMETHEUS_SERVER}",
+      "datasource": "Prometheus server",
       "fill": 1,
       "gridPos": {
         "h": 7,
@@ -306,6 +285,13 @@
       "points": false,
       "renderer": "flot",
       "repeat": "instance",
+      "scopedVars": {
+        "instance": {
+          "selected": false,
+          "text": "172.17.0.1:9323",
+          "value": "172.17.0.1:9323"
+        }
+      },
       "seriesOverrides": [],
       "spaceLength": 10,
       "stack": false,
@@ -361,7 +347,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_PROMETHEUS_SERVER}",
+      "datasource": "Prometheus server",
       "description": "Measuring some percentiles performance",
       "fill": 1,
       "gridPos": {
@@ -392,6 +378,13 @@
       "points": false,
       "renderer": "flot",
       "repeat": "instance",
+      "scopedVars": {
+        "instance": {
+          "selected": false,
+          "text": "172.17.0.1:9323",
+          "value": "172.17.0.1:9323"
+        }
+      },
       "seriesOverrides": [],
       "spaceLength": 10,
       "stack": false,
@@ -467,7 +460,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_PROMETHEUS_SERVER}",
+      "datasource": "Prometheus server",
       "fill": 1,
       "gridPos": {
         "h": 7,
@@ -496,6 +489,13 @@
       "points": false,
       "renderer": "flot",
       "repeat": "instance",
+      "scopedVars": {
+        "instance": {
+          "selected": false,
+          "text": "172.17.0.1:9323",
+          "value": "172.17.0.1:9323"
+        }
+      },
       "seriesOverrides": [],
       "spaceLength": 10,
       "stack": false,
@@ -551,7 +551,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_PROMETHEUS_SERVER}",
+      "datasource": "Prometheus server",
       "description": "Measuring histogram on some percentile",
       "fill": 1,
       "gridPos": {
@@ -582,6 +582,13 @@
       "points": false,
       "renderer": "flot",
       "repeat": "instance",
+      "scopedVars": {
+        "instance": {
+          "selected": false,
+          "text": "172.17.0.1:9323",
+          "value": "172.17.0.1:9323"
+        }
+      },
       "seriesOverrides": [],
       "spaceLength": 10,
       "stack": false,
@@ -657,7 +664,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_PROMETHEUS_SERVER}",
+      "datasource": "Prometheus server",
       "decimals": 0,
       "fill": 1,
       "gridPos": {
@@ -686,6 +693,13 @@
       "points": false,
       "renderer": "flot",
       "repeat": "instance",
+      "scopedVars": {
+        "instance": {
+          "selected": false,
+          "text": "172.17.0.1:9323",
+          "value": "172.17.0.1:9323"
+        }
+      },
       "seriesOverrides": [],
       "spaceLength": 10,
       "stack": false,
@@ -740,7 +754,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_PROMETHEUS_SERVER}",
+      "datasource": "Prometheus server",
       "decimals": 0,
       "fill": 1,
       "gridPos": {
@@ -770,6 +784,13 @@
       "points": false,
       "renderer": "flot",
       "repeat": "instance",
+      "scopedVars": {
+        "instance": {
+          "selected": false,
+          "text": "172.17.0.1:9323",
+          "value": "172.17.0.1:9323"
+        }
+      },
       "seriesOverrides": [],
       "spaceLength": 10,
       "stack": false,
@@ -937,8 +958,11 @@
       },
       {
         "allValue": null,
-        "current": {},
-        "datasource": "${DS_PROMETHEUS_SERVER}",
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": "Prometheus server",
         "hide": 0,
         "includeAll": true,
         "label": "Instance",

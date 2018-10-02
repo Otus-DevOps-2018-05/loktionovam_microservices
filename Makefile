@@ -40,12 +40,17 @@ TELEGRAF_DOCKER_IMAGE_NAME ?= telegraf
 TELEGRAF_DOCKER_IMAGE_TAG ?= $(shell ./get_dockerfile_version.sh $(TELEGRAF_DOCKER_DIR)/Dockerfile)
 TELEGRAF_DOCKER_IMAGE ?= $(DOCKER_REGISTRY_USER)/$(TELEGRAF_DOCKER_IMAGE_NAME):$(TELEGRAF_DOCKER_IMAGE_TAG)
 
+GRAFANA_DOCKER_DIR ?= monitoring/grafana
+GRAFANA_DOCKER_IMAGE_NAME ?= grafana
+GRAFANA_DOCKER_IMAGE_TAG ?= $(shell ./get_dockerfile_version.sh $(GRAFANA_DOCKER_DIR)/Dockerfile)
+GRAFANA_DOCKER_IMAGE ?= $(DOCKER_REGISTRY_USER)/$(GRAFANA_DOCKER_IMAGE_NAME):$(GRAFANA_DOCKER_IMAGE_TAG)
+
 build_reddit: ui_build post_build comment_build
-build_monitoring: prometheus_build mongodb_exporter_build blackbox_exporter_build alertmanager_build telegraf_build
+build_monitoring: prometheus_build mongodb_exporter_build blackbox_exporter_build alertmanager_build telegraf_build grafana_build
 build: build_reddit build_monitoring
 
 push_reddit: ui_push post_push comment_push
-push_monitoring: prometheus_push mongodb_exporter_push blackbox_exporter_push alermanager_push telegraf_push
+push_monitoring: prometheus_push mongodb_exporter_push blackbox_exporter_push alermanager_push telegraf_push grafana_push
 push: push_reddit push_monitoring
 
 all: build push
@@ -144,6 +149,17 @@ telegraf_push:
 
 telegraf: telegraf_build telegraf_push
 
+grafana_build:
+	@echo ">> building docker image $(GRAFANA_DOCKER_IMAGE)"
+	@cd "$(GRAFANA_DOCKER_DIR)"; \
+	docker build -t $(GRAFANA_DOCKER_IMAGE) .
+
+grafana_push:
+	@echo ">> push $(GRAFANA_DOCKER_IMAGE) docker image to dockerhub"
+	@docker push "$(GRAFANA_DOCKER_IMAGE)"
+
+grafana: grafana_build grafana_push
+
 up_reddit: build_reddit
 	@echo ">> Create and start microservices via docker compose"
 	@cd docker; docker-compose up -d
@@ -172,4 +188,5 @@ prometheus prometheus_build prometheus_push \
 mongodb_exporter_build mongodb_exporter_push mongodb_exporter \
 blackbox_exporter blackbox_exporter_build blackbox_exporter_push \
 alertmanager alertmanager_build alermanager_push \
-telegraf telegraf_build telegraf_push
+telegraf telegraf_build telegraf_push \
+grafana grafana_build grafana_push
