@@ -77,6 +77,19 @@ services:
       - front_net
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock"
+  stackdriver:
+    image: frodenas/stackdriver-exporter:v${STRACKDRIVER_VERSION}
+    ports:
+      - 9255:9255
+    networks:
+      - front_net
+    volumes:
+      - $HOME/.docker/stackdriver.secrets:/stackdriver.secrets
+      - $HOME/.docker/gce-service-account.json:/gce-service-account.json
+    environment:
+      - STACKDRIVER_EXPORTER_MONITORING_METRICS_TYPE_PREFIXES="${STACKDRIVER_METRICS_PREFIXES}"
+      - STACKDRIVER_EXPORTER_GOOGLE_PROJECT_ID=/stackdriver.secrets
+      - GOOGLE_APPLICATION_CREDENTIALS=/gce-service-account.json
 volumes:
   prometheus_data:
   grafana_data:
