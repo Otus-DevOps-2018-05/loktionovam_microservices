@@ -8,7 +8,7 @@ data "terraform_remote_state" "state" {
   backend = "gcs"
 
   config {
-    bucket = "docker-tf-state-prod"
+    bucket = "docker-tf-state-stage-20181004001"
   }
 }
 
