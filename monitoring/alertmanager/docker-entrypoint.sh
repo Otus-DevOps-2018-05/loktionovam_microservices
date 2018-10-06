@@ -1,5 +1,6 @@
 #!/bin/ash
 
+source /alertmanager.secrets
 cat > /etc/alertmanager/config.yml <<EOF
 global:
   slack_api_url: $ALERTMANAGER_SLACK_API_URL
