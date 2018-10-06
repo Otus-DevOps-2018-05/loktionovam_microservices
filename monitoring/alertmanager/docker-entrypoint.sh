@@ -12,9 +12,9 @@ receivers:
   slack_configs:
   - channel: '#aleksandr_loktionov'
   email_configs:
-  - to: gcpaleksandrloktionov@gmail.com
+  - to: $ALERTMANGER_EMAIL_TO
     smarthost: smtp.mailgun.org:2525
-    from: alertmanager@example.com
+    from: $ALERTMANGER_EMAIL_FROM
     auth_username: $ALERTMANGER_EMAIL_AUTH_USERNAME
     auth_password: $ALERTMANGER_EMAIL_AUTH_PASSWORD
 EOF
