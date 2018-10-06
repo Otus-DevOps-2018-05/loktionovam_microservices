@@ -1,0 +1,34 @@
+---
+- name: Run reddit microservices
+  hosts: tag_docker-host
+
+  tasks:
+
+    - name: Clone reddit microservices git repository
+      git:
+        dest: /home/docker-user/reddit-microservices
+        repo: https://github.com/Otus-DevOps-2018-05/loktionovam_microservices.git
+        version: monitoring-2
+
+    - name: Copy docker compose environment file
+      copy:
+        src: ~/.docker/reddit_microservices/.env
+        dest: /home/docker-user/reddit-microservices/docker/.env
+      no_log: true
+
+    - name: Copy alertmanager secrets file
+      copy:
+        src: ~/.docker/reddit_microservices/alertmanager/alertmanager.secrets
+        dest: /home/docker-user/reddit-microservices/monitoring/alertmanager/alertmanager.secrets
+      no_log: true
+
+    - name: Copy stackdriver gce service account file
+      copy:
+        src: ~/.docker/reddit_microservices/stackdriver/gce-service-account.json
+        dest: /home/docker-user/reddit-microservices/monitoring/stackdriver/gce-service-account.json
+      no_log: true
+
+    - name: Run reddit microservices
+      make:
+        chdir: /home/docker-user/reddit-microservices
+        target: up
