@@ -45,12 +45,17 @@ GRAFANA_DOCKER_IMAGE_NAME ?= grafana
 GRAFANA_DOCKER_IMAGE_TAG ?= $(shell ./get_dockerfile_version.sh $(GRAFANA_DOCKER_DIR)/Dockerfile)
 GRAFANA_DOCKER_IMAGE ?= $(DOCKER_REGISTRY_USER)/$(GRAFANA_DOCKER_IMAGE_NAME):$(GRAFANA_DOCKER_IMAGE_TAG)
 
+STACKDRIVER_DOCKER_DIR ?= monitoring/stackdriver
+STACKDRIVER_DOCKER_IMAGE_NAME ?= stackdriver-exporter
+STACKDRIVER_DOCKER_IMAGE_TAG ?= $(shell ./get_dockerfile_version.sh $(STACKDRIVER_DOCKER_DIR)/Dockerfile)
+STACKDRIVER_DOCKER_IMAGE ?= $(DOCKER_REGISTRY_USER)/$(STACKDRIVER_DOCKER_IMAGE_NAME):$(STACKDRIVER_DOCKER_IMAGE_TAG)
+
 build_reddit: ui_build post_build comment_build
-build_monitoring: prometheus_build mongodb_exporter_build blackbox_exporter_build alertmanager_build telegraf_build grafana_build
+build_monitoring: prometheus_build mongodb_exporter_build blackbox_exporter_build alertmanager_build telegraf_build grafana_build stackdriver_build
 build: build_reddit build_monitoring
 
 push_reddit: ui_push post_push comment_push
-push_monitoring: prometheus_push mongodb_exporter_push blackbox_exporter_push alermanager_push telegraf_push grafana_push
+push_monitoring: prometheus_push mongodb_exporter_push blackbox_exporter_push alermanager_push telegraf_push grafana_push stackdriver_push
 push: push_reddit push_monitoring
 
 all: build push
@@ -160,6 +165,17 @@ grafana_push:
 
 grafana: grafana_build grafana_push
 
+stackdriver_build:
+	@echo ">> building docker image $(STACKDRIVER_DOCKER_IMAGE)"
+	@cd "$(STACKDRIVER_DOCKER_DIR)"; \
+	docker build -t $(STACKDRIVER_DOCKER_IMAGE) .
+
+stackdriver_push:
+	@echo ">> push $(STACKDRIVER_DOCKER_IMAGE) docker image to dockerhub"
+	@docker push "$(STACKDRIVER_DOCKER_IMAGE)"
+
+stackdriver: stackdriver_build stackdriver_push
+
 up_reddit: build_reddit
 	@echo ">> Create and start microservices via docker compose"
 	@cd docker; docker-compose up -d
@@ -189,4 +205,5 @@ mongodb_exporter_build mongodb_exporter_push mongodb_exporter \
 blackbox_exporter blackbox_exporter_build blackbox_exporter_push \
 alertmanager alertmanager_build alermanager_push \
 telegraf telegraf_build telegraf_push \
-grafana grafana_build grafana_push
+grafana grafana_build grafana_push \
+stackdriver stackdriver_build stackdriver_push
