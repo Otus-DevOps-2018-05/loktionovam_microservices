@@ -9,7 +9,10 @@ import time
 
 CONTENT_TYPE_LATEST = str('text/plain; version=0.0.4; charset=utf-8')
 REQUEST_DB_LATENCY = prometheus_client.Histogram('post_read_db_seconds', 'Request DB time')
+INSERT_DB_LATENCY = prometheus_client.Histogram('post_insert_db_seconds', 'Insert post DB time')
+UPDATE_DB_LATENCY = prometheus_client.Histogram('post_update_db_seconds', 'Update post DB time')
 POST_COUNT = prometheus_client.Counter('post_count', 'A counter of new posts')
+VOTE_COUNT= prometheus_client.Counter('vote_count', 'A counter of new votes')
 
 mongo_host = os.getenv('POST_DATABASE_HOST', '127.0.0.1')
 mongo_port = os.getenv('POST_DATABASE_PORT', '27017')
@@ -37,7 +40,12 @@ def vote():
     vote_type = request.values.get("type")
     post = mongo_db.find_one({'_id': ObjectId(post_id)})
     post['votes'] += int(vote_type)
+    start_time = time.time()
     mongo_db.update_one({'_id': ObjectId(post_id)}, {"$set": {"votes": post['votes']}})
+    stop_time = time.time()
+    resp_time = stop_time - start_time
+    UPDATE_DB_LATENCY.observe(resp_time)
+    VOTE_COUNT.inc()
     return 'OK'
 
 
@@ -46,7 +54,11 @@ def add_post():
     title = request.values.get("title")
     link = request.values.get("link")
     created_at = request.values.get("created_at")
+    start_time = time.time()
     mongo_db.insert({"title": title, "link": link, "created_at": created_at, "votes": 0})
+    stop_time = time.time()
+    resp_time = stop_time - start_time
+    INSERT_DB_LATENCY.observe(resp_time)
     POST_COUNT.inc()
     return 'OK'
 
