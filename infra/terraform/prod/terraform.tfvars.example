@@ -9,3 +9,5 @@ docker_host_disk_image = "docker-host-base"
 source_ranges = ["0.0.0.0/0"]
 
 size = 10
+
+app_name = "reddit_microservices"

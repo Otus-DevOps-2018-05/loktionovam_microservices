@@ -71,7 +71,7 @@ resource "null_resource" "app" {
   }
 
   provisioner "local-exec" {
-    command     = "ansible-playbook -l ${google_compute_address.app_ip.address} --private-key ${var.private_key_path} playbooks/reddit_app.yml"
+    command     = "ansible-playbook -l ${google_compute_address.app_ip.address} --private-key ${var.private_key_path} playbooks/${var.app_name}.yml"
     working_dir = "../../ansible"
 
     environment {
@@ -104,6 +104,19 @@ resource "google_compute_firewall" "firewall_web" {
   allow {
     protocol = "tcp"
     ports    = ["80", "443"]
+  }
+
+  source_ranges = ["0.0.0.0/0"]
+  target_tags   = ["docker-host"]
+}
+
+resource "google_compute_firewall" "firewall_grafana" {
+  name    = "allow-grafana-${terraform.workspace}"
+  network = "default"
+
+  allow {
+    protocol = "tcp"
+    ports    = ["3000"]
   }
 
   source_ranges = ["0.0.0.0/0"]

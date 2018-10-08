@@ -22,6 +22,7 @@ module "docker_host" {
   count                  = "${var.count}"
   size                   = "${var.size}"
   app_provision_enabled  = "${var.app_provision_enabled}"
+  app_name               = "${var.app_name}"
   environment            = "${var.environment}"
 }
 
