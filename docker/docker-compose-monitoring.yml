@@ -85,6 +85,19 @@ services:
       - STACKDRIVER_EXPORTER_MONITORING_METRICS_TYPE_PREFIXES=${STACKDRIVER_METRICS_PREFIXES}
       - GOOGLE_APPLICATION_CREDENTIALS=/gce-service-account.json
       - STACKDRIVER_EXPORTER_GOOGLE_PROJECT_ID=${GOOGLE_PROJECT_ID}
+  trickster:
+    image: tricksterio/trickster:${TRICKSTER_VERSION}
+    ports:
+      - 8082:8082
+      - 8000:8000
+      - 8001:8001
+    networks:
+      - front_net
+    environment:
+      - TRK_LOG_LEVEL=INFO
+      - TRK_ORIGIN=http://prometheus:9090
+      - TRK_PROXY_PORT=8000
+      - TRK_METRICS_PORT=8001
 volumes:
   prometheus_data:
   grafana_data:

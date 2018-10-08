@@ -74,6 +74,10 @@ scrape_configs:
     static_configs:
       - targets:
         - 'stackdriver:9255'
+  - job_name: 'trickster'
+    static_configs:
+      - targets:
+        - 'trickster:8001'
 rule_files:
   - "alerts.yml"
 
