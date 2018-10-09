@@ -176,13 +176,17 @@ stackdriver_push:
 
 stackdriver: stackdriver_build stackdriver_push
 
-up_reddit: build_reddit
+run_reddit:
 	@echo ">> Create and start microservices via docker compose"
 	@cd docker; docker-compose up -d
 
-up_monitoring: build_monitoring
+up_reddit: build_reddit run_reddit
+
+run_monitoring:
 	@echo ">> Create and start monitoring microservices via docker compose"
 	@cd docker; docker-compose -f docker-compose-monitoring.yml up -d
+
+up_monitoring: build_monitoring run_monitoring
 
 down_reddit:
 	@echo ">> Stop and remove containers, networks, images, and volumes via docker compose"
@@ -194,9 +198,12 @@ down_monitoring:
 
 up: up_reddit up_monitoring
 
+run: run_reddit run_monitoring
+
 down: down_monitoring down_reddit
 
 .PHONY: all build push up down up_monitoring up_reddit down_monitoring down_reddit build_reddit build_monitoring\
+run_reddit run_monitoring run \
 ui_build ui_push ui \
 post_build post_push post \
 comment_build comment_push comment \
