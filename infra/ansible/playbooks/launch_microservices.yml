@@ -1,0 +1,11 @@
+---
+- name: Launch reddit microservices
+  hosts: tag_docker-host
+
+  tasks:
+
+    - name: Run reddit microservices
+      make:
+        chdir: /home/docker-user/reddit-microservices
+        target: "{{ microservices_make_target }}"
+
