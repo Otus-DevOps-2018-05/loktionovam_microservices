@@ -1,0 +1,6 @@
+---
+- name: Install AWX
+  hosts: all
+
+  roles:
+    - awx_wrapper

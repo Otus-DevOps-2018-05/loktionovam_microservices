@@ -21,11 +21,27 @@ galaxy_info:
 dependencies:
   - role: geerlingguy.ansible
     become: true
+    tags:
+      - awx_wrapper_install
+      - install
   - role: geerlingguy.git
     become: true
+    tags:
+      - awx_wrapper_install
+      - install
   - role: geerlingguy.docker
     become: true
+    tags:
+      - awx_wrapper_install
+      - install
   - role: geerlingguy.pip
     become: true
+    tags:
+      - awx_wrapper_install
+      - install
   - role: geerlingguy.nodejs
     become: true
+    tags:
+      - skip_ansible_lint
+      - awx_wrapper_install
+      - install

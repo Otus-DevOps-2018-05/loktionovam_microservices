@@ -12,7 +12,7 @@ lint:
 platforms:
   - name: awx-wrapper-xenial
     box: ubuntu/xenial64
-    memory: 2048
+    memory: 4096
     cpus: 4
     instance_raw_config_args:
       - "vm.network 'forwarded_port', guest: 443, host: 13443"

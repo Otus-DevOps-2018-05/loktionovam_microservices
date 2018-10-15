@@ -1,0 +1,6 @@
+---
+- name: Install AWX
+  hosts: tag_mgmt-host
+
+  roles:
+    - awx_wrapper

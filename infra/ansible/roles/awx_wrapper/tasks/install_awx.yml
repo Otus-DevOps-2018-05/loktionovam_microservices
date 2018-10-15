@@ -1,0 +1,35 @@
+---
+
+- name: Install additional python modules
+  pip:
+    name: "{{ item.module }}"
+    version: "{{ item.version }}"
+  with_items:
+    - "{{ awx_wrapper_python_modules }}"
+  become: true
+
+- name: Install AWX
+  import_role:
+    name: geerlingguy.awx
+  vars:
+    postgres_data_dir: "{{ awx_wrapper_postgres_data_dir }}"
+    awx_version: "{{ awx_wrapper_awx_version }}"
+  become: true
+
+- name: Wait until web server become available
+  wait_for:
+    port: 80
+    host: localhost
+    delay: 10
+    state: started
+  delegate_to: "{{ inventory_hostname }}"
+
+- name: Wait until AWX started
+  uri:
+    url: "{{ awx_wrapper_cli_host }}"
+    status_code: 200
+  delegate_to: "{{ inventory_hostname }}"
+  register: awx_wrapper_started
+  until: awx_wrapper_started.redirected == false
+  retries: 10
+  delay: 30

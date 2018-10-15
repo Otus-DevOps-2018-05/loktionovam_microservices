@@ -16,3 +16,4 @@ __pycache__
 *.secrets
 secrets.tar
 pytestdebug.log
+infra/ansible/roles/geerlingguy*
