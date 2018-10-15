@@ -1,0 +1,137 @@
+---
+# tasks file for awx_wrapper
+
+- name: Check that awx credentials file exist
+  stat:
+    path: "{{ awx_wrapper_credentials }}"
+  register: awx_wrapper_credentials_stat
+  delegate_to: localhost
+  no_log: true
+
+- name: Load secrets from awx credentials file
+  include_vars:
+    file: "{{ awx_wrapper_credentials }}"
+  when: awx_wrapper_credentials_stat.stat.exists == true
+  no_log: true
+
+- name: Install additional python modules
+  pip:
+    name: "{{ item.module }}"
+    version: "{{ item.version }}"
+  with_items:
+    - "{{ awx_wrapper_python_modules }}"
+  become: true
+
+- name: Install AWX
+  import_role:
+    name: geerlingguy.awx
+  vars:
+    postgres_data_dir: "{{ awx_wrapper_postgres_data_dir }}"
+    awx_version: "{{ awx_wrapper_awx_version }}"
+  become: true
+
+- name: Create tower cli config file
+  template:
+    src: tower_cli.cfg.j2
+    dest: "{{ awx_cli_config }}"
+    mode: 0400
+  no_log: true
+
+- name: Wait until AWX started
+  uri:
+    url: "{{ awx_wrapper_cli_host }}"
+    status_code: 200
+  register: awx_wrapper_started
+  until: awx_wrapper_started.redirected == false
+  retries: 10
+  delay: 30
+
+- name: Create AWX project
+  tower_project:
+    name: "{{ awx_wrapper_project_name }}"
+    description: "{{ awx_wrapper_project_description }}"
+    scm_type: "{{ awx_wrapper_scm_type }}"
+    scm_url: "{{ awx_wrapper_scm_url }}"
+    scm_branch: "{{ awx_wrapper_scm_branch }}"
+    tower_config_file: "{{ awx_cli_config }}"
+    scm_update_on_launch: true
+  ignore_errors: true
+
+- name: Create AWX organization
+  tower_organization:
+    name: "{{ awx_wrapper_organization_name }}"
+    tower_config_file: "{{ awx_cli_config }}"
+
+- name: Copy gce key to AWX node
+  copy:
+    src: ~/.ansible/awx_wrapper_key
+    dest: ~/.ssh/awx_wrapper_key
+    mode: 0400
+  no_log: true
+
+- name: Create AWX GCE credential
+  tower_credential:
+    name: "{{ awx_wrapper_gce_credential_name }}"
+    kind: gce
+    organization: "{{ awx_wrapper_organization_name }}"
+    project: "{{ awx_wrapper_gce_project_name }}"
+    tower_config_file: "{{ awx_cli_config }}"
+    username: "{{ awx_wrapper_gce_username }}"
+    ssh_key_data: ~/.ssh/awx_wrapper_key
+  changed_when: false
+
+- name: Copy docker user machine key to AWX node
+  copy:
+    src: ~/.ssh/docker-user
+    dest: ~/.ssh/docker-user
+    mode: 0400
+  no_log: true
+
+- name: Create AWX machine credential
+  tower_credential:
+    name: "{{ awx_wrapper_machine_credential_name }}"
+    kind: ssh
+    organization: "{{ awx_wrapper_organization_name }}"
+    tower_config_file: "{{ awx_cli_config }}"
+    username: "{{ awx_wrapper_machine_credential_user }}"
+    ssh_key_data: ~/.ssh/docker-user
+  changed_when: false
+
+- name: Create AWX GCE inventory
+  tower_inventory:
+    name: "{{ awx_wrapper_inventory_name }}"
+    organization: "{{ awx_wrapper_organization_name }}"
+    tower_config_file: "{{ awx_cli_config }}"
+
+- name: Add GCE source to inventory
+  tower_inventory_source:
+    name: "{{ awx_wrapper_inventory_source_name }}"
+    inventory: "{{ awx_wrapper_inventory_name }}"
+    source: gce
+    credential: "{{ awx_wrapper_gce_credential_name }}"
+    update_on_launch: true
+    overwrite: true
+    tower_config_file: "{{ awx_cli_config }}"
+
+- name: Copy var file to remote machine
+  copy:
+    src: extra_vars.yml
+    dest: extra_vars.yml
+
+- name: Create tower run microservices job template
+  tower_job_template:
+    name: run_microservices
+    job_type: run
+    inventory: "{{ awx_wrapper_inventory_name }}"
+    project: "{{ awx_wrapper_project_name }}"
+    playbook: infra/ansible/playbooks/launch_microservices.yml
+    job_tags: run
+    credential: "{{ awx_wrapper_machine_credential_name }}"
+    extra_vars_path: extra_vars.yml
+    tower_config_file: "{{ awx_cli_config }}"
+  register: awx_wrapper_job_template_created
+  until: awx_wrapper_job_template_created.changed == true
+  retries: 10
+  delay: 30
+  ignore_errors: true
+  changed_when: false

@@ -1,0 +1,31 @@
+---
+galaxy_info:
+  author: Aleksandr Loktionov
+  description: none
+  company: none
+
+  license: BSD
+
+  min_ansible_version: 2.7
+
+  platforms:
+    - name: Ubuntu
+      versions:
+        - xenial
+
+  galaxy_tags:
+    - ansible
+    - awx
+    - infrastructure
+
+dependencies:
+  - role: geerlingguy.ansible
+    become: true
+  - role: geerlingguy.git
+    become: true
+  - role: geerlingguy.docker
+    become: true
+  - role: geerlingguy.pip
+    become: true
+  - role: geerlingguy.nodejs
+    become: true

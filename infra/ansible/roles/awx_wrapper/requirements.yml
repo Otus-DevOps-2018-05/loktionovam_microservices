@@ -1,0 +1,25 @@
+---
+
+- src: https://github.com/geerlingguy/ansible-role-awx.git
+  version: 1.2.0
+  name: geerlingguy.awx
+
+- src: https://github.com/geerlingguy/ansible-role-git.git
+  version: 2.0.3
+  name: geerlingguy.git
+
+- src: https://github.com/geerlingguy/ansible-role-ansible.git
+  version: 2.0.0
+  name: geerlingguy.ansible
+
+- src: https://github.com/geerlingguy/ansible-role-docker.git
+  version: 2.5.1
+  name: geerlingguy.docker
+
+- src: https://github.com/geerlingguy/ansible-role-pip.git
+  version: 1.2.2
+  name: geerlingguy.pip
+
+- src: https://github.com/geerlingguy/ansible-role-nodejs.git
+  version: 4.2.2
+  name: geerlingguy.nodejs
