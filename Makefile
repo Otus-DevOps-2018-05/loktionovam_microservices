@@ -50,12 +50,17 @@ STACKDRIVER_DOCKER_IMAGE_NAME ?= stackdriver-exporter
 STACKDRIVER_DOCKER_IMAGE_TAG ?= $(shell ./get_dockerfile_version.sh $(STACKDRIVER_DOCKER_DIR)/Dockerfile)
 STACKDRIVER_DOCKER_IMAGE ?= $(DOCKER_REGISTRY_USER)/$(STACKDRIVER_DOCKER_IMAGE_NAME):$(STACKDRIVER_DOCKER_IMAGE_TAG)
 
+AUTOHEAL_DOCKER_DIR ?= monitoring/autoheal
+AUTOHEAL_DOCKER_IMAGE_NAME ?= autoheal
+AUTOHEAL_DOCKER_IMAGE_TAG ?= $(shell ./get_dockerfile_version.sh $(AUTOHEAL_DOCKER_DIR)/Dockerfile)
+AUTOHEAL_DOCKER_IMAGE ?= $(DOCKER_REGISTRY_USER)/$(AUTOHEAL_DOCKER_IMAGE_NAME):$(AUTOHEAL_DOCKER_IMAGE_TAG)
+
 build_reddit: ui_build post_build comment_build
-build_monitoring: prometheus_build mongodb_exporter_build blackbox_exporter_build alertmanager_build telegraf_build grafana_build stackdriver_build
+build_monitoring: prometheus_build mongodb_exporter_build blackbox_exporter_build alertmanager_build telegraf_build grafana_build stackdriver_build autoheal_build
 build: build_reddit build_monitoring
 
 push_reddit: ui_push post_push comment_push
-push_monitoring: prometheus_push mongodb_exporter_push blackbox_exporter_push alermanager_push telegraf_push grafana_push stackdriver_push
+push_monitoring: prometheus_push mongodb_exporter_push blackbox_exporter_push alermanager_push telegraf_push grafana_push stackdriver_push autoheal_build
 push: push_reddit push_monitoring
 
 all: build push
@@ -176,6 +181,17 @@ stackdriver_push:
 
 stackdriver: stackdriver_build stackdriver_push
 
+autoheal_build:
+	@echo ">> building docker image $(AUTOHEAL_DOCKER_IMAGE)"
+	@cd "$(AUTOHEAL_DOCKER_DIR)"; \
+	docker build -t $(AUTOHEAL_DOCKER_IMAGE) .
+
+autoheal_push:
+	@echo ">> push $(AUTOHEAL_DOCKER_IMAGE) docker image to dockerhub"
+	@docker push "$(AUTOHEAL_DOCKER_IMAGE)"
+
+autoheal: autoheal_build autoheal_push
+
 run_reddit:
 	@echo ">> Create and start microservices via docker compose"
 	@cd docker; docker-compose up -d
@@ -213,4 +229,5 @@ blackbox_exporter blackbox_exporter_build blackbox_exporter_push \
 alertmanager alertmanager_build alermanager_push \
 telegraf telegraf_build telegraf_push \
 grafana grafana_build grafana_push \
-stackdriver stackdriver_build stackdriver_push
+stackdriver stackdriver_build stackdriver_push \
+autoheal autoheal_build autoheal_push
