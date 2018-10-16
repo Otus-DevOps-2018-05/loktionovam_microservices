@@ -13,3 +13,5 @@ size = 10
 app_provision_enabled = true
 
 app_name = "reddit_microservices"
+
+mgmt_host_disk_image = "mgmt-host-base"

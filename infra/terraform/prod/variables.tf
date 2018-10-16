@@ -51,3 +51,7 @@ variable "environment" {
   description = "Used environment in the ansible provision"
   default     = "prod"
 }
+
+variable mgmt_host_disk_image {
+  description = "Disk image"
+}

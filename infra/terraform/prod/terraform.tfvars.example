@@ -11,3 +11,5 @@ source_ranges = ["0.0.0.0/0"]
 size = 10
 
 app_name = "reddit_microservices"
+
+mgmt_host_disk_image = "mgmt-host-base"

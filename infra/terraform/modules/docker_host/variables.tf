@@ -45,8 +45,9 @@ variable "app_provision_enabled" {
 
 variable "app_name" {
   description = "Application name (reddit_app or reddit_microservices)"
-  default = "reddit_app"
+  default     = "reddit_app"
 }
+
 variable "environment" {
   description = "Used environment in the ansible provision"
 }

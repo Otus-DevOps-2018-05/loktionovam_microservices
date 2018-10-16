@@ -26,6 +26,18 @@ module "docker_host" {
   environment            = "${var.environment}"
 }
 
+module "mgmt_host" {
+  source               = "../modules/mgmt_host"
+  project              = "${var.project}"
+  public_key_path      = "${var.public_key_path}"
+  private_key_path     = "${var.private_key_path}"
+  zone                 = "${var.zone}"
+  mgmt_host_disk_image = "${var.mgmt_host_disk_image}"
+  count                = "1"
+  size                 = "${var.size}"
+  environment          = "${var.environment}"
+}
+
 module "vpc" {
   source        = "../modules/vpc"
   source_ranges = "${var.source_ranges}"

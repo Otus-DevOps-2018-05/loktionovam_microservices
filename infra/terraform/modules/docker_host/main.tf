@@ -56,6 +56,7 @@ resource "null_resource" "app" {
       "while fuser /var/lib/dpkg/lock ; do echo 'dpkg locked, waiting...'; sleep 3;done",
     ]
   }
+
   provisioner "local-exec" {
     command     = "ansible-playbook playbooks/gce_dynamic_inventory_setup.yml --extra-vars='env=${var.environment}'"
     working_dir = "../../ansible"
@@ -75,7 +76,7 @@ resource "null_resource" "app" {
     working_dir = "../../ansible"
 
     environment {
-      ANSIBLE_CONFIG      = "./ansible.cfg"
+      ANSIBLE_CONFIG = "./ansible.cfg"
     }
   }
 }
