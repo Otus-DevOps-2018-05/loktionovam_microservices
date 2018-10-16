@@ -98,7 +98,6 @@
     inventory: "{{ awx_wrapper_inventory_name }}"
     project: "{{ awx_wrapper_project_name }}"
     playbook: infra/ansible/playbooks/launch_microservices.yml
-    job_tags: run
     credential: "{{ awx_wrapper_machine_credential_name }}"
     extra_vars_path: extra_vars.yml
     tower_config_file: "{{ awx_cli_config }}"
