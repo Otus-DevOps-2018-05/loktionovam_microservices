@@ -1,0 +1,29 @@
+---
+galaxy_info:
+  author: Aleksandr Loktionov
+  description: none
+  company: none
+
+  license: BSD
+
+  min_ansible_version: 2.7
+
+  platforms:
+    - name: Ubuntu
+      versions:
+        - xenial
+
+  galaxy_tags:
+    - infrastructure
+
+dependencies:
+  - role: geerlingguy.docker
+    become: true
+    tags:
+      - autoheal_install
+      - install
+  - role: geerlingguy.pip
+    become: true
+    tags:
+      - autoheal_install
+      - install

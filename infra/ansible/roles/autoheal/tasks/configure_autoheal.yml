@@ -1,0 +1,22 @@
+---
+
+- name: Create autoheal config file
+  copy:
+    content: "{{ autoheal_config | to_nice_yaml }}"
+    dest: /root/autoheal_config.yml
+    mode: 0400
+  no_log: true
+  become: true
+
+- name: Start autoheal docker container
+  docker_container:
+    name: autoheal
+    image: loktionovam/autoheal:{{ autoheal_image_version }}
+    command: /autoheal server --config-file=/autoheal_config.yml
+    ports:
+      - 9099:9099
+    volumes:
+      - /root/.kube/:/root/.kube
+      - /root/.minikube/:/root/.minikube
+      - /root/autoheal_config.yml:/autoheal_config.yml
+  become: true

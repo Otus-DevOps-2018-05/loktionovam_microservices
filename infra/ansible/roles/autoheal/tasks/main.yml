@@ -1,0 +1,38 @@
+---
+# tasks file for autoheal
+
+- name: Check that autoheal credentials file exist
+  stat:
+    path: "{{ autoheal_credentials }}"
+  register: autoheal_credentials_stat
+  delegate_to: localhost
+  no_log: true
+  tags:
+    - autoheal_configure
+    - autoheal_install
+    - install
+    - configure
+
+- name: Load secrets from autoheal credentials file
+  include_vars:
+    file: "{{ autoheal_credentials }}"
+  when: autoheal_credentials_stat.stat.exists == true
+  no_log: true
+  tags:
+    - autoheal_configure
+    - autoheal_install
+    - install
+    - configure
+
+- name: Import install autoheal tasks
+  import_tasks: install_autoheal.yml
+  become: true
+  tags:
+    - autoheal_install
+    - install
+
+- name: Import configure autoheal tasks
+  import_tasks: configure_autoheal.yml
+  tags:
+    - autoheal_configure
+    - configure

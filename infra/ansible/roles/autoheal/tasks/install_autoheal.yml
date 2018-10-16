@@ -1,0 +1,42 @@
+---
+
+# autoheal nailed to kubernetes, so setup minimal configuration
+
+- name: Install prerequisite packages
+  apt:
+    name: "{{ autoheal_prerequisite_packages }}"
+    cache_valid_time: 86400
+
+- name: Install additional python modules
+  pip:
+    name: "{{ item.module }}"
+    version: "{{ item.version }}"
+  with_items:
+    - "{{ autoheal_python_modules }}"
+
+- name: Download minicube-linux-amd64
+  get_url:
+    url: https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+    dest: /usr/local/bin/minikube
+    mode: 0755
+
+- name: Check minikube config
+  stat:
+    path: /root/.minikube
+  register: minikube_config
+
+- name: Start minicube
+  command: minikube start --vm-driver=none
+  when: not minikube_config.stat.exists
+
+- name: Clone reddit microservices git repository
+  git:
+    dest: ~/reddit-microservices
+    repo: https://github.com/Otus-DevOps-2018-05/loktionovam_microservices.git
+    version: "{{ autoheal_repo_version }}"
+
+- name: Build autoheal docker image
+  make:
+    chdir: ~/reddit-microservices
+    target: autoheal_build
+  changed_when: false
