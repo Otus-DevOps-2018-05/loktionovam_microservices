@@ -55,17 +55,24 @@ AUTOHEAL_DOCKER_IMAGE_NAME ?= autoheal
 AUTOHEAL_DOCKER_IMAGE_TAG ?= $(shell ./get_dockerfile_version.sh $(AUTOHEAL_DOCKER_DIR)/Dockerfile)
 AUTOHEAL_DOCKER_IMAGE ?= $(DOCKER_REGISTRY_USER)/$(AUTOHEAL_DOCKER_IMAGE_NAME):$(AUTOHEAL_DOCKER_IMAGE_TAG)
 
+FLUENTD_DOCKER_DIR ?= logging/fluentd
+FLUENTD_DOCKER_IMAGE_NAME ?= fluentd
+FLUENTD_DOCKER_IMAGE_TAG ?= $(shell ./get_dockerfile_version.sh $(FLUENTD_DOCKER_DIR)/Dockerfile)
+FLUENTD_DOCKER_IMAGE ?= $(DOCKER_REGISTRY_USER)/$(FLUENTD_DOCKER_IMAGE_NAME):$(FLUENTD_DOCKER_IMAGE_TAG)
+
 build_reddit: ui_build post_build comment_build
 build_monitoring: prometheus_build mongodb_exporter_build blackbox_exporter_build alertmanager_build telegraf_build grafana_build stackdriver_build autoheal_build
-build: build_reddit build_monitoring
+build_logging: fluentd_build
+build: build_reddit build_monitoring build_logging
 
 push_reddit: ui_push post_push comment_push
 push_monitoring: prometheus_push mongodb_exporter_push blackbox_exporter_push alermanager_push telegraf_push grafana_push stackdriver_push autoheal_build
-push: push_reddit push_monitoring
+push_logging: fluentd_push
+push: push_reddit push_monitoring push_logging
 
 all: build push
 
-ui_build: 
+ui_build:
 	@echo ">> building docker image $(UI_DOCKER_IMAGE)"
 	@cd "$(UI_DOCKER_DIR)"; \
 	echo `git show --format="%h" HEAD | head -1` > build_info.txt; \
@@ -192,6 +199,17 @@ autoheal_push:
 
 autoheal: autoheal_build autoheal_push
 
+fluentd_build:
+	@echo ">> building docker image $(FLUENTD_DOCKER_IMAGE)"
+	@cd "$(FLUENTD_DOCKER_DIR)"; \
+	docker build -t $(FLUENTD_DOCKER_IMAGE) .
+
+fluentd_push:
+	@echo ">> push $(FLUENTD_DOCKER_IMAGE) docker image to dockerhub"
+	@docker push "$(FLUENTD_DOCKER_IMAGE)"
+
+fluentd: fluentd_build fluentd_push
+
 run_reddit:
 	@echo ">> Create and start microservices via docker compose"
 	@cd docker; docker-compose up -d
@@ -204,6 +222,12 @@ run_monitoring:
 
 up_monitoring: build_monitoring run_monitoring
 
+run_logging:
+	@echo ">> Create and start logging microservices via docker compose"
+	@cd docker; docker-compose -f docker-compose-logging.yml up -d
+
+up_logging: build_logging run_logging
+
 down_reddit:
 	@echo ">> Stop and remove containers, networks, images, and volumes via docker compose"
 	@cd docker; docker-compose down
@@ -212,13 +236,20 @@ down_monitoring:
 	@echo ">> Stop and remove containers monitoring via docker compose"
 	@cd docker; docker-compose -f docker-compose-monitoring.yml down
 
-up: up_reddit up_monitoring
+down_logging:
+	@echo ">> Stop and remove containers logging via docker compose"
+	@cd docker; docker-compose -f docker-compose-logging.yml down
 
-run: run_reddit run_monitoring
+up: up_reddit up_monitoring up_logging
 
-down: down_monitoring down_reddit
+run: run_reddit run_monitoring run_logging
 
-.PHONY: all build push up down up_monitoring up_reddit down_monitoring down_reddit build_reddit build_monitoring\
+down: down_monitoring down_reddit down_logging
+
+.PHONY: all build push up down \
+up_monitoring up_reddit up_logging \
+down_monitoring down_reddit down_logging \
+build_reddit build_monitoring build_logging\
 run_reddit run_monitoring run \
 ui_build ui_push ui \
 post_build post_push post \
@@ -230,4 +261,5 @@ alertmanager alertmanager_build alermanager_push \
 telegraf telegraf_build telegraf_push \
 grafana grafana_build grafana_push \
 stackdriver stackdriver_build stackdriver_push \
-autoheal autoheal_build autoheal_push
+autoheal autoheal_build autoheal_push \
+fluentd fluentd_build fluentd_push \
