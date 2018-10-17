@@ -7,7 +7,7 @@ services:
       - "24224:24224/udp"
 
   elasticsearch:
-    image: elasticsearch
+    image: elasticsearch:${ELASTICSEARCH_VERSION}
     expose:
       - 9200
     ports:
