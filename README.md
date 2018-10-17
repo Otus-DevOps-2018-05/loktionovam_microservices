@@ -605,11 +605,16 @@ make all
 
 ## Homework-19: Мониторинг приложения и инфраструктуры
 
+### 19.1 Что было сделано
+
 Основное задание: мониторинг docker контейнеров; визуализация метрик; сборк метрик работы приложения и бизнес метрик; настройка и проверка алертинга
 
-Задание со *:
+Задание со *: в Makefile добавлены цели для контейнеров telegraf, grafana, stackdriver, autoheal
+
+Задание со *: в ansible роль docker-host добавлена настройка докер-хоста для отдачи метрик в prometheus, в grafana добавлен дашборд для их отображения (Docker_Engine_Metrics.json)
 
 <https://grafana.com/dashboards/1229>
+
 ```bash
 # Docker native metrics
 curl http://172.17.0.1:9323/metrics 2>/dev/null| grep -E "^# " -v | wc -l
@@ -617,22 +622,132 @@ curl http://172.17.0.1:9323/metrics 2>/dev/null| grep -E "^# " -v | wc -l
 ```
 
 ```bash
-# Cadvisor metrics
+# Cadvisor metrics (их общее число зависит от числа контейнеров)
 curl http://localhost:8080/metrics 2>/dev/null| grep -v "^# " | wc -l
 3950
 
+# Число уникальных метрик в Cadvisor
 total: 58
-
 ```
+
+Задание со *: добавлен мониторинг через telegraf, добавлен grafana dashboard `Docker_Performance_Monitoring.json` для отображения метрик собираемых через telegraf
 
 ```bash
 # telegraf docker metrics
-grep -v "#"  metrics  | grep docker | wc -l 
+curl http://localhost:9273/metrics 2>/dev/null 2>/dev/null | grep -v "#"  metrics  | grep docker | wc -l
 926
 ```
 
-### 19.1 Что было сделано
+Задание со *: добавлен `UIHTTPHighResponceLatency` алерт (95-й перцентиль времени ответа UI)
+
+Задание со *: настроена интеграция alertmanager с mailgun для рассылки оповещений на почту Для alertmanager я не нашел хорошего способа передачи секретных данных, кроме как хранить их в файле с конфигурацией ([https://github.com/prometheus/alertmanager/issues/504]), поэтому я добавил генерацию этого файла во время старта контейнера через скрипт `docker-entrypoint.sh`, при этом файл с секретами `alertmanager.secrets` лежит рядом с `Dockerfile` и настраивается через ansible плейбук `configure_microservices.yml` когда хост создается через terraform. Файл `alertmanager/config.yml` оставлен для проверки валидатором этого ДЗ и не используется Добавлена поддержка `alertmanager.secrets` в конфигурацию travis (данные зашифрованы в `secrets.tar.enc`)
+
+Задание с **: добавлена загрузка дашбордов и источников данных в grafana через конфигурационные файлы, переделаны `json` файлы дашбордов для поддержки такого способа конфигурирования grafana (суть проблемы описана здесь [https://community.grafana.com/t/what-is-the-correct-way-to-save-dashboard-json-for-use-in-provisioning/5254/5])
+
+Задание с **: добавлен мониторинг через stackdriver prometheus exporter (полный список метрик можно посмотреть здесь [https://cloud.google.com/monitoring/api/metrics_gcp]), добавлен `GCP stackdriver` дашборд в grafana. Stackdriver сэмплирует метрики раз в 60 секунд и отдает большинство из них только через 240 секунд, что может быть проблематично для оперативного обнаружения и устранения проблем (правда позволяет собирать не только метрики хостов, но множество других метрик GCP, например storage или loadbalancing)
+
+```bash
+# stackdriver metrics
+curl http://localhost:9255/metrics 2>/dev/null | grep -E "^# " -v | wc -l
+94
+```
+
+Задание с **: в код приложения post добавлен сбор метрик INSERT_DB_LATENCY, UPDATE_DB_LATENCY, VOTE_COUNT, добавлен дашборд `Post_DB_stats.json` в grafana для отображения задержек при операциях с БД в сервисе post, в дашборд Business_Logic_Monitoring добавлен график `Vote rate`
+
+Задание с ***: в конфигурацию микросервисов добавлен trickster, datasource в grafana изменены с prometheus на trickster, в конфигурацию prometheus добавлен сбор метрик с trickster
+
+Задание с ***: добавлена связка autoheal+AWX для автоматического исправления проблем. Добавлена ansible роль `awx_wrapper` которая автоматически устанавливает и запускает AWX, создает в нем организацию, проект, необходимые credentials, inventory, job template для исправления проблемы падения микросервиса. Добавлена конфигурация docker для сборки и запуска autoheal, добавлена ansible роль `autoheal` для автоматического запуска и настройки autoheal и окружения для его запуска (autoheal прибит гвоздями к kubernetes, поэтому для его запуска роль использует `minikube`, обсуждение проблемы здесь [https://github.com/openshift/autoheal/issues/110]). Добавлен ansible плейбук `mgmt_host.yml` для автоматического развертывания AWX+autoheal. Добавлен шаблон `mgmt_host.json` в packer для подготовки образа ноды c AWX+autoheal. Добавлен модуль `mgmt_host` в terraform для автоматического провиженинга AWX+autoheal на отдельный инстанс в GCE, в конфигурацию stage/prod terraform добавлено использование этого модуля.
 
 ### 19.2 Как запустить проект
 
+Предполагается, что уже настрен аккаунт mailgun и есть конфигурационные параметры для настройки alertmanager
+
+- Настроить следующие файлы
+
+```bash
+find . -name "*.example"
+
+./infra/packer/variables.json.example
+./infra/terraform/stage/terraform.tfvars.example
+./infra/terraform/terraform.tfvars.example
+./infra/terraform/prod/terraform.tfvars.example
+./monitoring/stackdriver/gce-service-account.json.example
+./monitoring/alertmanager/alertmanager.secrets.example
+```
+
+- Установить зависимости для ansible ролей
+
+```bash
+cd infra/ansible
+ansible-galaxy install -r roles/awx_wrapper/requirements.yml
+```
+
+- Создать образы `docker_host`, `mgmt_host` через packer
+
+```bash
+cd ..
+packer build -var-file=packer/variables.json packer/mgmt_host.json
+packer build -var-file=packer/variables.json packer/docker_host.json
+```
+
+- Запустить через terraform, например stage окружение
+
+```bash
+cd terraform
+terraform init
+terraform apply -auto-approve
+cd stage
+terraform init
+terraform apply -auto-approve
+```
+
 ### 19.3 Как проверить проект
+
+После выполнения вышеописанных шагов будет создано два инстанса в GCE `docker-host-default-001` (микросервисы), `mgmt-host-default-001` (AWX+autoheal)
+
+```
+docker_host_external_ip = [
+    docker_host_ip
+]
+mgmt_host_external_ip = mgmt_host_ip
+```
+
+при этом на `docker-host-default-001` будут доступны следующие ресурсы
+
+```
+http://docker_host_ip:9292 - reddit ui
+http://docker_host_ip:3000 - grafana ui
+http://docker_host_ip:9090 - prometheus ui
+```
+
+а на `mgmt-host-default-001`
+
+```
+http://mgmt_host_ip  - AWX ui
+```
+
+Если убить, например, `ui` контейнер, то в slack и на почту упадет оповещение
+
+```
+[1] Firing
+Labels
+alertname = InstanceDown
+instance = ui:9292
+job = ui
+severity = page
+Annotations
+description = ui:9292 of job ui has been down for more than 1 minute
+summary = Instance ui:9292 down
+```
+
+а через autoheal+AWX сервис будет перезапущен с помощью AWX job template `run_microservices`, при этом в логах autoheal будут сообщения
+
+```
+I1017 16:11:10.524400       1 alerts_worker.go:135] Checking rule 'start-services' for alert 'InstanceDown'
+I1017 16:11:10.524507       1 alerts_worker.go:103] Rule 'start-services' matches alert 'InstanceDown'
+I1017 16:11:10.524516       1 alerts_worker.go:174] Running rule 'start-services' for alert 'InstanceDown'
+I1017 16:11:11.120843       1 awx_action_runner.go:117] Running AWX job from project 'otus' and template 'run_microservices' to heal alert 'InstanceDown'
+I1017 16:11:11.740007       1 awx_action_runner.go:164] Request to launch AWX job from template 'run_microservices' has been sent, job identifier is '3'
+I1017 16:15:38.765453       1 active_jobs_worker.go:27] Going over active jobs queue
+I1017 16:15:39.180936       1 awx_action_runner.go:213] Job 3 status: successful
+```
