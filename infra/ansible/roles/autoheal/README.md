@@ -1,31 +1,97 @@
-Role Name
+autoheal
 =========
 
-A brief description of the role goes here.
+Build and run openshift autoheal docker container
 
 Requirements
 ------------
 
-Any pre-requisites that may not be covered by Ansible itself or the role should be mentioned here. For instance, if the role uses the EC2 module, it may be a good idea to mention in this section that the boto package is required.
+none
 
 Role Variables
 --------------
 
-A description of the settable variables for this role should go here, including any variables that are in defaults/main.yml, vars/main.yml, and any variables that can/should be set via parameters to the role. Any variables that are read from other roles and/or the global scope (ie. hostvars, group vars, etc.) should be mentioned here as well.
+- Role environment (local/stage/prod)
+
+```yaml
+env: local
+```
+
+- Additional packages and python modules which used to build and run autoheal docker image
+
+```yaml
+autoheal_prerequisite_packages:
+  - make
+
+autoheal_python_modules:
+  - { module: docker, version: 3.4.1 }
+```
+
+- Branch to checkout autoheal repo
+
+```yaml
+autoheal_repo_version: monitoring-2
+```
+
+- Image version to start
+
+```yaml
+autoheal_image_version: 4.0.0-0.9.0
+```
+
+- Path to autoheal credendials `autoheal_awx_username`, `autoheal_awx_password`
+
+```yaml
+autoheal_credentials: ~/.ansible/autoheal_credentials.yml
+```
+
+- AWX address
+
+```yaml
+autoheal_awx_address: http://localhost/api
+```
+
+- Define this variables in the `autoheal_credentials` file
+
+```yaml
+autoheal_awx_username: "{{ mandatory }}"
+autoheal_awx_password: "{{ mandatory }}"
+```
+
+- Main autoheal configuration
+
+```yaml
+autoheal_config:
+  awx:
+    address: "{{ autoheal_awx_address }}"
+    credentials:
+      username: "{{ autoheal_awx_username }}"
+      password: "{{ autoheal_awx_password }}"
+    project: otus
+  rules:
+    - metadata:
+        name: start-services
+      labels:
+        alertname: ".*InstanceDown.*"
+      awxJob:
+        template: "run_microservices"
+```
 
 Dependencies
 ------------
 
-A list of other roles hosted on Galaxy should go here, plus any details in regards to parameters that may need to be set for other roles, or variables that are used from other roles.
+- geerlingguy.docker
+
+- geerlingguy.pip
 
 Example Playbook
 ----------------
 
-Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
-
+```yaml
     - hosts: servers
       roles:
-         - { role: username.rolename, x: 42 }
+         - { role: autoheal, autoheal_awx_address: http://awx.example.com/api }
+```
 
 License
 -------
@@ -35,4 +101,4 @@ BSD
 Author Information
 ------------------
 
-An optional section for the role authors to include contact information, or a website (HTML is not allowed).
+Aleksandr Loktionov
