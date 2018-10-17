@@ -52,7 +52,7 @@ resource "google_compute_instance" "mgmt_host" {
   }
 
   provisioner "local-exec" {
-    command     = "ansible-playbook --private-key ${var.private_key_path} --tags='awx_wrapper_configure' playbooks/mgmt_host.yml --extra-vars='awx_wrapper_cli_host=http://{{ ansible_ssh_host }}'"
+    command     = "ansible-playbook --private-key ${var.private_key_path} --tags='awx_wrapper_configure,autoheal_configure' playbooks/mgmt_host.yml --extra-vars='awx_wrapper_cli_host=http://{{ ansible_ssh_host }}'"
     working_dir = "../../ansible"
 
     environment {
