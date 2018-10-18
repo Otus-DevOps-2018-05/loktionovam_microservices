@@ -125,7 +125,7 @@ resource "google_compute_firewall" "firewall_grafana" {
 }
 
 resource "google_compute_firewall" "firewall_kibana" {
-  name    = "allow-grafana-${terraform.workspace}"
+  name    = "allow-kibana-${terraform.workspace}"
   network = "default"
 
   allow {
@@ -138,7 +138,7 @@ resource "google_compute_firewall" "firewall_kibana" {
 }
 
 resource "google_compute_firewall" "firewall_zipkin" {
-  name    = "allow-grafana-${terraform.workspace}"
+  name    = "allow-zipkin-${terraform.workspace}"
   network = "default"
 
   allow {
