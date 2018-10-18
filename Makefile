@@ -240,9 +240,9 @@ down_logging:
 	@echo ">> Stop and remove containers logging via docker compose"
 	@cd docker; docker-compose -f docker-compose-logging.yml down
 
-up: up_reddit up_monitoring up_logging
+up: up_logging up_reddit up_monitoring
 
-run: run_reddit run_monitoring run_logging
+run: run_logging run_reddit run_monitoring
 
 down: down_monitoring down_reddit down_logging
 
