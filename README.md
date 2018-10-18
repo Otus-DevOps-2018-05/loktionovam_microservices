@@ -776,6 +776,11 @@ I1017 16:15:39.180936       1 awx_action_runner.go:213] Job 3 status: successful
 
 - (*) Настроен распределенный трейсинг через zipkin, с помощью которого, проблема медленной загрузки постов
 
+- В terraform добавлены правила файерволла для kibana, zipkin
+
+- В ansible роль docker_host добавлена таска "Setup sysctl vm.max_map_count (need to start Elasticsearch docker container)"
+
+
 Решение проблемы медленной загрузки постов:
 
 - В трейсе zipkin видно, что загрузка поста тормозит (выполняется более 3 секунд) в микросервисе post на span `db_find_single_post`
