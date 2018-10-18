@@ -8,6 +8,8 @@ services:
       back_net:
         aliases:
           - comment_db
+    environment:
+      - ZIPKIN_ENABLED=${ZIPKIN_ENABLED}
   ui:
     image: ${USER_NAME}/ui:${UI_VERSION}
     ports:
@@ -19,6 +21,8 @@ services:
       options:
         fluentd-address: localhost:24224
         tag: service.ui
+    environment:
+      - ZIPKIN_ENABLED=${ZIPKIN_ENABLED}
   post:
     image: ${USER_NAME}/post:${POST_VERSION}
     networks:
@@ -29,11 +33,15 @@ services:
       options:
         fluentd-address: localhost:24224
         tag: service.post
+    environment:
+      - ZIPKIN_ENABLED=${ZIPKIN_ENABLED}
   comment:
     image: ${USER_NAME}/comment:${COMMENT_VERSION}
     networks:
       - front_net
       - back_net
+    environment:
+      - ZIPKIN_ENABLED=${ZIPKIN_ENABLED}
 volumes:
   post_db:
 
