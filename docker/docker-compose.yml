@@ -19,6 +19,11 @@ services:
     networks:
       - front_net
       - back_net
+    logging:
+      driver: "fluentd"
+      options:
+        fluentd-address: localhost:24224
+        tag: service.post
   comment:
     image: ${USER_NAME}/comment:${COMMENT_VERSION}
     networks:
