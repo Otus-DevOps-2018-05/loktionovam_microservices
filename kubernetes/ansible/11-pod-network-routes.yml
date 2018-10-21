@@ -1,0 +1,24 @@
+---
+- name: Provisioning Pod Network Routes
+  hosts: localhost
+  connection: local
+
+  vars:
+    gce_project: "{{ lookup('env','GCE_PROJECT') }}"
+    gce_region: "{{ lookup('env','GCE_REGION') }}"
+    gce_credentials_file: "{{ lookup('env','GCE_CREDENTIALS') }}"
+
+  tasks:
+
+    - name: Create network routes for each worker instance
+      gcp_compute_route:
+        name: "kubernetes-route-10-200-{{ item }}-0-24"
+        dest_range: 10.200.{{ item }}.0/24
+        next_hop_ip: 10.240.0.2{{ item }}
+        network:
+          selfLink: projects/{{ gce_project }}/global/networks/kubernetes-the-hard-way
+        project: "{{ gce_project }}"
+        auth_kind: "serviceaccount"
+        service_account_file: "{{ gce_credentials_file }}"
+        state: present
+      with_sequence: start=0 end=2

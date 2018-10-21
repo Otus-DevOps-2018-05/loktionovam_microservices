@@ -1,0 +1,16 @@
+---
+- name: Deploying the DNS Cluster Add-on
+  hosts: localhost
+  connection: local
+
+  vars:
+    gce_project: "{{ lookup('env','GCE_PROJECT') }}"
+    gce_region: "{{ lookup('env','GCE_REGION') }}"
+    gce_credentials_file: "{{ lookup('env','GCE_CREDENTIALS') }}"
+
+  tasks:
+
+    - name: Deploy the coredns cluster add-on
+      command: kubectl apply -f https://storage.googleapis.com/kubernetes-the-hard-way/coredns.yaml
+      register: coredns_install
+      changed_when: '"serviceaccount/coredns created" in coredns_install.stdout'

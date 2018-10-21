@@ -7,3 +7,6 @@
 - import_playbook: 08-bootstrapping-kubernetes-controllers.yml
 - import_playbook: 08-kubernetes-frontend-load-balancer.yml
 - import_playbook: 09-bootstrapping-kubernetes-workers.yml
+- import_playbook: 10-configuring-kubectl.yml
+- import_playbook: 11-pod-network-routes.yml
+- import_playbook: 12-dns-addon.yml
