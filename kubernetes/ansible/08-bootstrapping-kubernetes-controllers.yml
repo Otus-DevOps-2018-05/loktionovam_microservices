@@ -1,0 +1,182 @@
+- name: Bootstrap the Kubernetes control plane across compute instances and configure it for high availability
+  hosts: tag_controller
+
+  vars:
+    gce_project: "{{ lookup('env','GCE_PROJECT') }}"
+    gce_region: "{{ lookup('env','GCE_REGION') }}"
+    gce_credentials_file: "{{ lookup('env','GCE_CREDENTIALS') }}"
+
+  pre_tasks:
+    - name:  Get controller gcp facts
+      gcp_compute_instance_facts:
+        zone: "{{ gce_region }}-b"
+        filters:
+          - name = {{ inventory_hostname }}
+        project: "{{ gce_project }}"
+        auth_kind: serviceaccount
+        service_account_file: "{{ gce_credentials_file }}"
+        scopes: https://www.googleapis.com/auth/compute
+      register: controller_stat
+      delegate_to: localhost
+
+    - name: Get controller internal IP
+      set_fact:
+        controller_int_ip: "{{ controller_stat['items'].0.networkInterfaces.0.networkIP }}"
+
+  tasks:
+
+    - name: Bootstapping kubernetes controller
+      block:
+        - name: Create the Kubernetes directories
+          file:
+            path: "{{ item }}"
+            state: directory
+          with_items:
+            - /etc/kubernetes/config
+            - /var/lib/kubernetes
+          become: true
+
+        - name: Download the official Kubernetes release binaries
+          get_url:
+            url: https://storage.googleapis.com/kubernetes-release/release/v1.12.0/bin/linux/amd64/{{ item }}
+            dest: /usr/local/bin/{{ item }}
+            mode: 0755
+          with_items:
+            - kube-apiserver
+            - kube-controller-manager
+            - kube-scheduler
+            - kubectl
+          become: true
+
+        - name: Copy certificates, private keys and encryption confg to Kubernetes API server
+          copy:
+            src: "{{ item }}"
+            dest: /var/lib/kubernetes/{{ item }}
+          notify:
+            - 'restart kube-apiserver'
+            - 'restart kube-controller-manager'
+            - 'restart kube-scheduler'
+          with_items:
+            - ca.pem
+            - ca-key.pem
+            - kubernetes-key.pem
+            - kubernetes.pem
+            - service-account-key.pem
+            - service-account.pem
+            - encryption-config.yaml
+          no_log: true
+          become: true
+
+        - name: Create the kube-apiserver.service systemd unit file
+          template:
+            src: kube-apiserver.service.j2
+            dest: /etc/systemd/system/kube-apiserver.service
+          notify: restart kube-apiserver
+
+        - name: Copy kube-controller-manager kubeconfig
+          copy:
+            src: kube-controller-manager.kubeconfig
+            dest: /var/lib/kubernetes/kube-controller-manager.kubeconfig
+
+        - name: Create the kube-controller-manager.service systemd unit file
+          template:
+            src: kube-controller-manager.service.j2
+            dest: /etc/systemd/system/kube-controller-manager.service
+          notify: restart kube-controller-manager
+
+        - name: Copy kube-scheduler kubeconfig
+          copy:
+            src: kube-scheduler.kubeconfig
+            dest: /var/lib/kubernetes/kube-scheduler.kubeconfig
+
+        - name: Copy kube-scheduler yaml config
+          copy:
+            src: kube-scheduler.yaml
+            dest: /etc/kubernetes/config/kube-scheduler.yaml
+          notify: restart kube-scheduler
+
+        - name: Create the kube-scheduler.service systemd unit file
+          template:
+            src: kube-scheduler.service.j2
+            dest: /etc/systemd/system/kube-scheduler.service
+          notify: restart kube-scheduler
+
+        - name: Install nginx
+          apt:
+            name: nginx
+            cache_valid_time: 86400
+
+        - name: Copy basic web server config to handle HTTP health checks
+          copy:
+            src: kubernetes.default.svc.cluster.local
+            dest: /etc/nginx/sites-available/kubernetes.default.svc.cluster.local
+          notify:
+            - 'enable http health checks'
+            - 'restart nginx'
+      become: true
+
+    - name: Copy admin kubeconfig
+      copy:
+        src: admin.kubeconfig
+        dest: admin.kubeconfig
+
+    - name: Copy kube-apiserver-to-kubelet yaml configuration files
+      copy:
+        src: "{{ item }}"
+        dest: "{{ item }}"
+      with_items:
+        - kube_apiserver_to_kubelet_role.yaml
+        - kube_apiserver_to_kubelet_role_binding.yaml
+      no_log: true
+
+    - name: Create the kube-apiserver-to-kubelet ClusterRole with permissions to access the Kubelet API and perform most common tasks associated with managing pods
+      command: kubectl apply --kubeconfig admin.kubeconfig -f kube_apiserver_to_kubelet_role.yaml
+      register: kubelet_role_status
+      changed_when: kubelet_role_status.stdout == 'clusterrole.rbac.authorization.k8s.io/system:kube-apiserver-to-kubelet created'
+      run_once: true
+
+    - name: Bind the system:kube-apiserver-to-kubelet ClusterRole to the kubernetes user
+      command: kubectl apply --kubeconfig admin.kubeconfig -f kube_apiserver_to_kubelet_role_binding.yaml
+      register: kubelet_role_binding_status
+      changed_when: kubelet_role_binding_status.stdout == 'clusterrolebinding.rbac.authorization.k8s.io/system:kube-apiserver created'
+      run_once: true
+
+  handlers:
+
+    - name: restart kube-apiserver
+      systemd:
+        name: kube-apiserver.service
+        enabled: true
+        daemon_reload: true
+        state: restarted
+      become: true
+
+    - name: restart kube-controller-manager
+      systemd:
+        name: kube-controller-manager.service
+        enabled: true
+        daemon_reload: true
+        state: restarted
+      become: true
+
+    - name: restart kube-scheduler
+      systemd:
+        name: kube-scheduler.service
+        enabled: true
+        daemon_reload: true
+        state: restarted
+      become: true
+
+    - name: enable http health checks
+      file:
+        src: /etc/nginx/sites-available/kubernetes.default.svc.cluster.local
+        dest: /etc/nginx/sites-enabled/kubernetes.default.svc.cluster.local
+        state: link
+      become: true
+
+    - name: restart nginx
+      service:
+        name: nginx
+        state: restarted
+        enabled: true
+      become: true

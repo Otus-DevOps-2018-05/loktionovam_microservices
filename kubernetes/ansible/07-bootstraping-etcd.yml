@@ -19,6 +19,10 @@
       register: controller_stat
       delegate_to: localhost
 
+    - name: Get controller internal IP
+      set_fact:
+        controller_int_ip: "{{ controller_stat['items'].0.networkInterfaces.0.networkIP }}"
+
   tasks:
 
     - name: Install etcd
@@ -51,10 +55,6 @@
           - kubernetes.pem
         no_log: true
         notify: restart etcd
-
-      - name: Get controller internal IP
-        set_fact:
-          controller_int_ip: "{{ controller_stat['items'].0.networkInterfaces.0.networkIP }}"
 
       - name: Create the etcd.service systemd unit file
         template:

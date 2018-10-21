@@ -1,0 +1,76 @@
+---
+
+- name: Provision a Network Load Balancer
+  hosts: localhost
+  connection: local
+
+  vars:
+    gce_project: "{{ lookup('env','GCE_PROJECT') }}"
+    gce_region: "{{ lookup('env','GCE_REGION') }}"
+    gce_credentials_file: "{{ lookup('env','GCE_CREDENTIALS') }}"
+
+  tasks:
+
+    - name: Get external IP address facts
+      gcp_compute_address_facts:
+        region: "{{ gce_region }}"
+        filters:
+          - name = kubernetes-the-hard-way
+        project: "{{ gce_project }}"
+        auth_kind: serviceaccount
+        service_account_file: "{{ gce_credentials_file }}"
+        scopes: https://www.googleapis.com/auth/compute
+      register: external_ip_stat
+
+    - name: Get Kubernetes external IP address
+      set_fact:
+        kubernetes_public_ip: "{{ external_ip_stat['items'].0.address }}"
+
+    - name: Create a kubernetes health check
+      gcp_compute_http_health_check:
+          name: "kubernetes"
+          host: kubernetes.default.svc.cluster.local
+          request_path: "/healthz"
+          project: "{{ gce_project }}"
+          auth_kind: "serviceaccount"
+          service_account_file: "{{ gce_credentials_file }}"
+          state: present
+      register: kubernetes_health_check
+
+    - name: Create a firewall rule that allow kubernetes health check
+      gce_net:
+        name: kubernetes-the-hard-way
+        fwname: "kubernetes-the-hard-way-allow-health-check"
+        allowed: tcp
+        state: "present"
+        src_range: ['209.85.152.0/22', '209.85.204.0/22', '35.191.0.0/16']
+
+    - name: Create a kubernetes target pool
+      gcp_compute_target_pool:
+        name: "kubernetes-target-pool"
+        region: "{{ gce_region }}"
+        project: "{{ gce_project }}"
+        auth_kind: "serviceaccount"
+        service_account_file: "{{ gce_credentials_file }}"
+        health_check: "{{ kubernetes_health_check }}"
+        state: present
+      register: kubernetes_target_pool
+
+    # instance population via gcp_compute_target_pool above don't working
+    # so use gcloud cli
+    - name: Add instances to kubernetes-target-pool
+      command: gcloud compute target-pools add-instances kubernetes-target-pool --instances controller-0,controller-1,controller-2
+      changed_when: true
+
+    - name: Create a kubernetes forwarding rule
+      gcp_compute_forwarding_rule:
+        name: "kubernetes-forwarding-rule"
+        region: "{{ gce_region }}"
+        target: "{{ kubernetes_target_pool }}"
+        ip_protocol: TCP
+        port_range: 6443
+        ip_address: "{{ kubernetes_public_ip }}"
+        project: "{{ gce_project }}"
+        auth_kind: "serviceaccount"
+        service_account_file: "{{ gce_credentials_file }}"
+        state: present
