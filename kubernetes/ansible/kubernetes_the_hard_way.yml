@@ -1,0 +1,4 @@
+- import_playbook: 02-client-tools.yml
+- import_playbook: 03-provisioning-compute-resources.yml
+- import_playbook: 04-certificate-authority.yml
+- import_playbook: 05-generate-kubeconfigs.yml

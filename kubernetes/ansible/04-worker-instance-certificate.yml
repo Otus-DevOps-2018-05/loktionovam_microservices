@@ -1,0 +1,46 @@
+---
+
+- name: Check if worker-{{ item }} certificate exists
+  stat:
+    path: files/worker-{{ item }}.pem
+  register: worker_cert
+
+- name: Generate worker-{{ item }} certificate and key if it's don't exist
+  block:
+
+    - name:  Get worker-{{ item }} gcp fact
+      gcp_compute_instance_facts:
+        zone: "{{ gce_region }}-b"
+        filters:
+          - name = worker-{{ item }}
+        project: "{{ gce_project }}"
+        auth_kind: serviceaccount
+        service_account_file: "{{ gce_credentials_file }}"
+        scopes: https://www.googleapis.com/auth/compute
+      register: worker_stat
+
+    - name: Get worker-{{ item }} external IP
+      set_fact:
+        worker_ext_ip: "{{ worker_stat['items'].0.networkInterfaces.0.accessConfigs.0.natIP }}"
+
+    - name: Get worker-{{ item }} internal IP
+      set_fact:
+        worker_int_ip: "{{ worker_stat['items'].0.networkInterfaces.0.networkIP }}"
+
+    - name: Create worker-{{ item }} csr json
+      template:
+        src: worker-csr.json.j2
+        dest: files/worker-{{ item }}-csr.json
+
+    - name: Generate certificate and private key for worker-{{ item }}
+      shell: |
+        cfssl gencert \
+        -ca=ca.pem \
+        -ca-key=ca-key.pem \
+        -config=ca-config.json \
+        -hostname=worker-{{ item }},{{ worker_ext_ip }},{{ worker_int_ip }} \
+        -profile=kubernetes \
+        worker-{{ item }}-csr.json | cfssljson -bare worker-{{ item }}
+      args:
+        chdir: files
+  when: worker_cert.stat.exists == false
