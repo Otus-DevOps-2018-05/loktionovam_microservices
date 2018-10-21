@@ -73,3 +73,11 @@
     - name: Import controller instances creation tasks
       include_tasks: 03-create-controller-instance.yml
       with_sequence: start=0 end=2
+
+    # Dirty hack here. It is better to poll the node
+    - name: Wait for 5 minutes while instances up
+      pause:
+        minutes: 5
+
+    - name: Refresh inventory to ensure new instaces exist in inventory
+      meta: refresh_inventory

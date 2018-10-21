@@ -112,6 +112,13 @@
             - 'restart nginx'
       become: true
 
+    - name: Flush handlers here, because we need started services before continue
+      meta: flush_handlers
+
+    - name: Wait minute while services started
+      pause:
+        minutes: 1
+
     - name: Copy admin kubeconfig
       copy:
         src: admin.kubeconfig
