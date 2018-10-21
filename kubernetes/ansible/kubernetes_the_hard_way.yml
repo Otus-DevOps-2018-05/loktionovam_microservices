@@ -2,3 +2,5 @@
 - import_playbook: 03-provisioning-compute-resources.yml
 - import_playbook: 04-certificate-authority.yml
 - import_playbook: 05-generate-kubeconfigs.yml
+- import_playbook: 06-data-encryption.yml
+- import_playbook: 07-bootstraping-etcd.yml

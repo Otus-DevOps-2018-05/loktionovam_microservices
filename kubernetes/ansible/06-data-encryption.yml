@@ -1,0 +1,24 @@
+---
+- name: Generate an encryption key and an encryption config suitable for encrypting Kubernetes Secrets
+  hosts: localhost
+  connection: local
+
+  tasks:
+
+    - name: Check if encryption-config exists
+      stat:
+        path: files/encryption-config.yaml
+      register: encrytpion_config
+
+    - name: Create encryption-config
+      block:
+        - name: Generate encryption key
+          set_fact:
+            encryption_key: "{{ lookup('password', '/dev/null length=32') | b64encode }}"
+
+        - name: Render encrytpion_config
+          template:
+            src: encryption-config.yaml.j2
+            dest: files/encryption-config.yaml
+
+      when: encrytpion_config.stat.exists == false
