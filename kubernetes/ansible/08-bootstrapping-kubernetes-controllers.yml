@@ -34,7 +34,6 @@
           with_items:
             - /etc/kubernetes/config
             - /var/lib/kubernetes
-          become: true
 
         - name: Download the official Kubernetes release binaries
           get_url:
@@ -46,7 +45,6 @@
             - kube-controller-manager
             - kube-scheduler
             - kubectl
-          become: true
 
         - name: Copy certificates, private keys and encryption confg to Kubernetes API server
           copy:
@@ -65,7 +63,6 @@
             - service-account.pem
             - encryption-config.yaml
           no_log: true
-          become: true
 
         - name: Create the kube-apiserver.service systemd unit file
           template:
