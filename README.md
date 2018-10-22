@@ -878,3 +878,90 @@ ansible-playbook -K kubernetes_the_hard_way.yml
 cd kubernetes/reddit
 for DEPLOYMENT in *.yml; do kubectl apply -f $DEPLOYMENT;done
 ```
+
+### Homework-22: Kubernetes. Запуск кластера и приложения. Модель безопасности
+
+Основное задание: развернуть локальное окружение для работы с k8s; развернуть k8s в GKE; запустить reddit в k8s
+
+Задание со*: развернуть k8s в GKE с помощью terraform; создать YAML манифесты для включения k8s dashboard
+
+### 22.1 Что было сделано
+
+- Развернуто и настроено локальное окружение k8s через minicube
+
+- Сконфигурированы `deployment` и `service` файлы reddit приложения
+
+- Добавлен манифест с dev `namespace`
+
+- Добавлена конфигурация `terraform` для провиженинга k8s в GKE - модуль gke, который развертывает k8s кластер и настраивает файерволл
+
+- Добавлены YAML манифесты для развертывания k8s dashboard
+
+### 22.2 Как запустить проект
+
+- Развернуть kubernetes в GKE
+
+```bash
+cd kubernetes/terraform
+terraform init
+terraform apply -auto-approve=true
+cd kubernetes
+terraform init
+terraform apply -auto-approve=true
+```
+
+- Сконфигурировать `kubectl` для работы с вновь созданным кластером
+
+```bash
+export GKE_CLUSTER=cluster-name-here
+export GCP_ZONE=zone-here
+export GCP_PROJECT=project-here
+gcloud container clusters get-credentials $GKE_CLUSTER --zone $GCP_ZONE --project $GCP_PROJECT
+```
+
+- Разрешить пользователю создавать роли в Kubernetes, настроив `name: SETUP_USER_ACCOUNT_HERE` в файле `kubernetes/reddit/cluster-admin-rolebinding.yml` и выполнив
+
+```bash
+kubectl apply -f cluster-admin-rolebinding.yml
+```
+
+- Загрузить dashboard в kubernetes
+
+```bash
+kubectl apply -f kubernetes-dashboard.yaml
+kubectl apply -f kubernetes-dashboard-rolebinding.yml
+```
+
+- Создать `dev` namespace
+
+```bash
+kubectl apply -f dev-namespace.yml
+```
+
+- Задеплоить reddit приложение в `dev`
+
+```bash
+kubectl apply -f . -n dev
+````
+
+### 22.3 Как проверить проект
+
+- Проверка dashboard. После выполнения команды
+
+```bash
+kubectl proxy
+```
+
+должен быть доступен dashboard по адресу <http://localhost:8001/ui>
+
+- Проверка reddit приложеня. 
+
+```bash
+REDDIT_IP=$(kubectl get nodes  -o json | jq --raw-output --arg ext_ip "ExternalIP" '.items[0].status.addresses[] | select( .type == $ext_ip) | .address')
+```
+
+```bash
+REDDIT_PORT=$(kubectl get services ui -n dev -o json | jq '.spec.ports[].nodePort')
+```
+
+Приложение должно быть доступно по адресу <http://$REDDIT_IP:$REDDIT_PORT>
