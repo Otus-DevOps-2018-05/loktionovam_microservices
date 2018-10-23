@@ -965,3 +965,55 @@ REDDIT_PORT=$(kubectl get services ui -n dev -o json | jq '.spec.ports[].nodePor
 ```
 
 Приложение должно быть доступно по адресу <http://$REDDIT_IP:$REDDIT_PORT>
+
+### Homework-23: Kubernetes. Networks, Storages
+
+Основное задание: ознакомиться с типами сервисов для управления сетью (ClusterIP, NodePort, LoadBalancer), их работой в связке с `kube-dns`; ознакомиться с работой Ingress контроллера для организации доступа к приложению снаружи кластера, балансировки трафика, терминации TLS; ознакомиться с работой сетевых политик для ограничения доступа к сервису mongodb; конфигурирование быстрого, постоянного хранилища для mongodb с помощью persistent volume claim и storage class
+
+Задание со*: описать создаваемый объект `Secret` в виде Kubernetes манифеста
+
+### 23.1 Что было сделано
+
+- Проверена работа `kube-dns`
+
+- Проверена работа сервиса `ui` в режиме `nodePort`
+
+- Настроен сервис `LoadBalancer` для TCP балансировки, проверена его работа
+
+- Вместо `LoadBalancer` (у которого имеется ряд ограничений) настроен `Ingress controller` для L7 балансировки и терминирования TLS
+
+- (*) Объект Secret описан в виде k8s манифеста (см. `ui-ingress-secret.yml.example`)
+
+- Добавлено описание через `StorageClass` быстрого хранилища для mongodb
+
+- Хранилище для mongodb подключено через `Persistent Volume Claim`
+
+### 23.2 Как запустить проект
+
+Все аналогично описанному в п. 22.2 за исключением того, что после создания кластера терраформом нужно включить `NetworkPolicy` командами
+
+```bash
+gcloud beta container clusters update <cluster_name_here> --zone=<zone_here> --update-addons=NetworkPolicy=ENABLED
+gcloud beta container clusters update <cluster_name_here> --zone=<zone_here> --enable-network-policy
+```
+
+и настроить `ui-ingress-secret.yml.example` добавив реальные сертификат и ключ вместо `tls_certificate_here`, `tls_key_here`
+
+### 23.3 Как проверить проект
+
+- Для проверки `Ingress` контроллера нужно получить адрес командой
+
+```bash
+INGRESS_ADDRESS=$(kubectl get ingress -n dev -o json | jq --raw-output '.items[].status.loadBalancer.ingress[].ip')
+```
+
+и проверить в браузере, что reddit приложение открывается через https по этому адресу <https://INGRESS_ADDRESS>
+
+- Для проверки `Persistent Volume Claim` нужно создать пост в reddit приложении, затем удалить mongodb deploymlent и снова запустить
+
+```bash
+kubectl delete deploy mongo -n dev
+kubectl apply -f mongo-deployment.yml -n dev
+```
+
+при этом ранее созданный пост должен остаться.
