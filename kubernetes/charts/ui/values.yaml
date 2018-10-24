@@ -1,0 +1,14 @@
+---
+
+service:
+  internalPort: 9292
+  externalPort: 9292
+
+image:
+  repository: loktionovam/ui
+  tag: 3.3
+
+postHost:
+postPort:
+commentHost:
+commentPort:

@@ -1,0 +1,21 @@
+---
+comment:
+  image:
+    repository: loktionovam/comment
+    tag: 2.1
+  service:
+    externalPort: 9292
+
+post:
+  image:
+    repository: loktionovam/post
+    tag: 2.2
+  service:
+    externalPort: 5000
+
+ui:
+  image:
+    repository: loktionovam/ui
+    tag: 3.3
+  service:
+    externalPort: 9292
