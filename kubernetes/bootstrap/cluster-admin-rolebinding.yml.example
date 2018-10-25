@@ -14,4 +14,4 @@ roleRef:
 subjects:
 - apiGroup: rbac.authorization.k8s.io
   kind: User
-  name: SETUP_USER_ACCOUNT_HERE
+  name: gcpaleksandrloktionov1@gmail.com

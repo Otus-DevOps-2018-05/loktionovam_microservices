@@ -2,6 +2,8 @@ project = "your project id"
 
 size = 20
 
-nodes_count = 3
+defaultpool_nodes_count = 3
+
+bigpool_nodes_count = 2
 
 cluster_name = cluster-1
