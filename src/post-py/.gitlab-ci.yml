@@ -6,7 +6,7 @@ stages:
   - review
   - release
   - cleanup
-
+  - reddit_deploy
 build:
   stage: build
   image: docker:git
@@ -77,6 +77,15 @@ stop_review:
     kubernetes: active
   except:
     - master
+
+reddit_deploy:
+  stage: reddit_deploy
+  script:
+    - reddit_deploy
+  only:
+    refs:
+      - master
+    kubernetes: active
 
 .auto_devops: &auto_devops |
   [[ "$TRACE" ]] && set -x
@@ -196,6 +205,11 @@ stop_review:
     track="${1-stable}"
     name="$CI_ENVIRONMENT_SLUG"
     helm delete "$name" --purge || true
+  }
+
+  function reddit_deploy() {
+    apk add -U curl
+    curl -X POST -F token="$REDDIT_DEPLOY_TOKEN" -F ref=master http://gitlab-gitlab/api/v4/projects/1/trigger/pipeline
   }
 
 before_script:
