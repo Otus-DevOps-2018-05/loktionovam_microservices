@@ -12,3 +12,6 @@ postHost:
 postPort:
 commentHost:
 commentPort:
+
+ingress:
+  class: nginx
