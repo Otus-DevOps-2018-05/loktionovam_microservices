@@ -7,6 +7,8 @@ SCRIPT_DIR=$(dirname $(realpath "$0"))
 BOOTSTRAP_DIR="${SCRIPT_DIR}"/bootstrap
 CHART_DIR="${SCRIPT_DIR}"/charts
 gcloud container clusters get-credentials "${CLUSTER_NAME}" --zone "${ZONE}" --project "${PROJECT}"
+gcloud beta container clusters update "${CLUSTER_NAME}" --monitoring-service none
+gcloud beta container clusters update "${CLUSTER_NAME}" --logging-service none
 
 kubectl apply -f "${BOOTSTRAP_DIR}"/cluster-admin-rolebinding.yml
 kubectl apply -f "${BOOTSTRAP_DIR}"/kubernetes-dashboard-rolebinding.yml
