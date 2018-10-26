@@ -24,7 +24,7 @@ module "gke" {
   defaultpool_machine_size = "${var.defaultpool_machine_size}"
   bigpool_machine_size     = "${var.bigpool_machine_size}"
 
-  defaultpool_nodes_count = "${var.bigpool_nodes_count}"
+  defaultpool_nodes_count = "${var.defaultpool_nodes_count}"
   bigpool_nodes_count     = "${var.bigpool_nodes_count}"
 
   min_master_version = "${var.min_master_version}"
