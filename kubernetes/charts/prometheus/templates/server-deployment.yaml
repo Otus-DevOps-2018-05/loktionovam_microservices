@@ -113,8 +113,8 @@ spec:
             httpGet:
               path: {{ .Values.server.prefixURL }}/-/healthy
               port: 9090
-            initialDelaySeconds: 30
-            timeoutSeconds: 30
+            initialDelaySeconds: 60
+            timeoutSeconds: 60
           resources:
 {{ toYaml .Values.server.resources | indent 12 }}
           volumeMounts:

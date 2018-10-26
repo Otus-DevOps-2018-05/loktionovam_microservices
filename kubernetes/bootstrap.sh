@@ -18,4 +18,6 @@ kubectl apply -f "${BOOTSTRAP_DIR}"/tiller.yml
 helm init --wait --service-account tiller
 helm repo add gitlab https://charts.gitlab.io
 
+helm install stable/nginx-ingress --name nginx
 helm install --wait --name gitlab "${CHART_DIR}"/gitlab-omnibus -f "${CHART_DIR}"/gitlab-omnibus/values.yaml
+helm upgrade --wait prom "${CHART_DIR}"/prometheus -f "${CHART_DIR}"/prometheus/custom_values.yml --install
