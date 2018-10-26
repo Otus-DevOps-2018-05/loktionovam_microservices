@@ -12,6 +12,7 @@ gcloud beta container clusters update "${CLUSTER_NAME}" --logging-service none
 
 kubectl apply -f "${BOOTSTRAP_DIR}"/cluster-admin-rolebinding.yml
 kubectl apply -f "${BOOTSTRAP_DIR}"/kubernetes-dashboard-rolebinding.yml
+kubectl apply -f "${BOOTSTRAP_DIR}"/kubernetes-dashboard.yml
 kubectl apply -f "${BOOTSTRAP_DIR}"/tiller.yml
 
 helm init --wait --service-account tiller
