@@ -4,7 +4,7 @@ rbac:
 alertmanager:
   ## If false, alertmanager will not be installed
   ##
-  enabled: false
+  enabled: true
 
   # Defines the serviceAccountName to use when `rbac.create=false`
   serviceAccountName: default
@@ -16,8 +16,8 @@ alertmanager:
   ## alertmanager container image
   ##
   image:
-    repository: prom/alertmanager
-    tag: v0.10.0
+    repository: loktionovam/alertmanager
+    tag: 0.14.0
     pullPolicy: IfNotPresent
 
   ## Additional alertmanager container arguments
@@ -586,7 +586,29 @@ alertmanagerFiles:
 ## Prometheus server ConfigMap entries
 ##
 serverFiles:
-  alerts: {}
+  alerts:
+    groups:
+      - name: NodeAlerts
+        rules:
+          - alert: NodeDown
+            expr: up{job="kubernetes-nodes"} == 0
+            for: 1m
+            labels:
+              severity: page
+            annotations:
+              description: '{{ $labels.instance }} of job {{ $labels.job }} has been down for more than 1 minute'
+              summary: 'Instance {{ $labels.instance }} down'
+      - name: APIServerAlerts
+        rules:
+          - alert: APIServerDown
+            expr: up{job="kubernetes-apiservers"} == 0
+            for: 1m
+            labels:
+              severity: page
+            annotations:
+              description: '{{ $labels.instance }} of job {{ $labels.job }} has been down for more than 1 minute'
+              summary: 'Instance {{ $labels.instance }} down'
+
   rules: {}
 
   prometheus.yml:
