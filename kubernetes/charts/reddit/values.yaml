@@ -9,7 +9,7 @@ comment:
 post:
   image:
     repository: loktionovam/post
-    tag: 2.2
+    tag: 2.3
   service:
     externalPort: 5000
 
