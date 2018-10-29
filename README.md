@@ -1080,3 +1080,76 @@ REDDIT_DEPLOY_TOKEN - - токен для запуска reddit-deploy из др
 ```bash
 helm ls
 ```
+
+## Homework-25: Kubernetes. Мониторинг и логирование
+
+Основное задание: развертывание prometheus в k8s, настройка prometheus и grafana для сбора метрик, настройка EFK для сбора логов
+
+Задание со*: запуск alertmanager в k8s и настройка правил для контроля за доступностью api-сервера и хостов k8s
+
+Задание со*: создать helm-чарт для установки стека EFK
+
+### 25.1 Что было сделано
+
+- Выключен stackdriver (мониторинг и логирование) в процессе первоначальной установки и настройки k8s
+
+- Добавлен prometheus helm-чарт c kube-state-metrics и node-exporter
+
+- Добавлены `reddit-production, post-endpoints, comment-endpoints, ui-endpoints` jobs в конфигурацию prometheus helm-чарта
+
+- Добавлена установка grafana в процесс первоначальной установки и настройки k8s
+
+- Для `Business_Logic_Monitoring, Post_DB_stats, UI_Service_Monitoring` grafana dashboard включена параметризация через namespaces
+
+- Добавлены новые `kubernetes cluster monitoring, Kubernetes deployment metrics` дашборды в grafana
+
+- (*) В helm-чарте prometheus включен alertmanager, добавлены алерты `NodeDown`, `APIServerDown`
+
+- (*) Добавлен helm-чарт для установки EFK стека, добавлена установка EFK стека в процесс первоначальной установки и настройки k8s
+
+### 25.2 Как запустить проект
+
+Предполагается, что на локальной машине установлены terraform, kubectl, helm
+
+- Развернуть kubernetes в GKE, при этом будут развернуты tiller, prometheus, alertmanager, grafana, EFK
+
+```bash
+cd kubernetes/terraform
+terraform init
+terraform apply -auto-approve=true
+cd kubernetes
+terraform init
+terraform apply -auto-approve=true
+```
+
+- После бутстрапа в grafana нужно создать `Prometheus server` datasource и импортировать `Business_Logic_Monitoring, Post_DB_stats, UI_Service_Monitoring, Kubernetes cluster monitoring, Kubernetes deployment metrics` дашборды из каталога `monitoring/grafana/dashboards`
+
+- В kibana нужно создать шаблон индекса `fluentd-*`
+
+### 25.3 Как проверить проект
+
+- Получить внешний IP адрес приложений и изменить hosts файл
+
+```bash
+export HOSTS_ENTRY="$(kubectl get svc | grep nginx-nginx-ingress-controller | awk '{print $4}') reddit-prometheus reddit-grafana reddit-kibana"
+
+echo "$HOSTS_ENTRY" | sudo tee -a /etc/hosts
+```
+
+при этом prometheus, grafana, kibana будут доступны по адресам <http://reddit-prometheus>, <http://reddit-grafana>, <http://reddit-kibana>
+
+- Запустить несколько инстансов reddit приложения
+
+```bash
+helm upgrade reddit-test ./reddit —install
+helm upgrade production --namespace production  ./reddit --install
+helm upgrade staging --namespace staging  ./reddit —instal
+```
+
+- В дашбордах графаны `Business_Logic_Monitoring, Post_DB_stats, UI_Service_Monitoring` можно выбрать соответствующий namespace и получить метрики reddit приложения только для этого namespace
+
+- Дашборды графаны `Kubernetes cluster monitoring, Kubernetes deployment metrics` отображают текущее состояние k8s
+
+- При падении ноды k8s (например, выключении) срабатывает алерт `NodeDown` - оповещение должно приходить в slack канал и на почту
+
+- В веб-интерфейсе kibana после создания индекса, доступны логи reddit приложений
