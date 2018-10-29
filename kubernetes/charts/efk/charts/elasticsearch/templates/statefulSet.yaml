@@ -1,0 +1,69 @@
+apiVersion: apps/v1beta2
+kind: StatefulSet
+metadata:
+  name: {{ .Release.Name }}-{{ .Chart.Name }}
+  labels:
+    app: efk
+    component: elasticsearch
+    release: {{ .Release.Name }}
+    kubernetes.io/cluster-service: "true"
+    addonmanager.kubernetes.io/mode: Reconcile
+spec:
+  serviceName: {{ .Release.Name }}-{{ .Chart.Name }}
+  replicas: 1
+  selector:
+    matchLabels:
+      app: efk
+      component: elasticsearch
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: efk
+        component: elasticsearch
+        release: {{ .Release.Name }}
+        kubernetes.io/cluster-service: "true"
+    spec:
+      nodeSelector:
+        elastichost: "true"
+      containers:
+      - image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+        name: {{ .Release.Name }}-{{ .Chart.Name }}
+        resources:
+          # need more cpu upon initialization, therefore burstable class
+          limits:
+            cpu: 1000m
+          requests:
+            cpu: 100m
+        ports:
+        - containerPort: 9200
+          name: db
+          protocol: TCP
+        - containerPort: 9300
+          name: transport
+          protocol: TCP
+        volumeMounts:
+        - name: es-pvc-volume-{{ .Release.Name }}-{{ .Chart.Name }}
+          mountPath: /data
+        env:
+        - name: ELASTICSEARCH_SERVICE_NAME
+          value: {{ .Release.Name }}-{{ .Chart.Name }}
+        - name: MINIMUM_MASTER_NODES
+          value: "1"
+        - name: "NAMESPACE"
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+      volumes:
+      - name: es-pvc-volume-{{ .Release.Name }}-{{ .Chart.Name }}
+        persistentVolumeClaim:
+          claimName: {{ .Release.Name }}-{{ .Chart.Name }}-claim
+      # Elasticsearch requires vm.max_map_count to be at least 262144.
+      # If your OS already sets up this number to a higher value, feel free
+      # to remove this init container.
+      initContainers:
+      - image: alpine:3.6
+        command: ["/sbin/sysctl", "-w", "vm.max_map_count=262144"]
+        name: {{ .Release.Name }}-{{ .Chart.Name }}-init
+        securityContext:
+          privileged: true

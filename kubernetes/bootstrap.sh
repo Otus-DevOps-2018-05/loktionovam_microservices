@@ -5,7 +5,6 @@ ZONE=$2
 PROJECT=$3
 SCRIPT_DIR=$(dirname $(realpath "$0"))
 BOOTSTRAP_DIR="${SCRIPT_DIR}"/bootstrap
-EFK_DIR="${SCRIPT_DIR}"/efk
 CHART_DIR="${SCRIPT_DIR}"/charts
 
 GRAFANA_PASSWD=$(cat /dev/urandom| tr -c -d '[:alnum:]' | head -c 12)
@@ -14,10 +13,10 @@ gcloud container clusters get-credentials "${CLUSTER_NAME}" --zone "${ZONE}" --p
 gcloud beta container clusters update "${CLUSTER_NAME}" --monitoring-service none
 gcloud beta container clusters update "${CLUSTER_NAME}" --logging-service none
 
-kubectl apply -f "${BOOTSTRAP_DIR}"/cluster-admin-rolebinding.yml
-kubectl apply -f "${BOOTSTRAP_DIR}"/kubernetes-dashboard-rolebinding.yml
-kubectl apply -f "${BOOTSTRAP_DIR}"/kubernetes-dashboard.yml
-kubectl apply -f "${BOOTSTRAP_DIR}"/tiller.yml
+kubectl apply -f "${BOOTSTRAP_DIR}"/cluster-admin-rolebinding.yaml
+kubectl apply -f "${BOOTSTRAP_DIR}"/kubernetes-dashboard-rolebinding.yaml
+kubectl apply -f "${BOOTSTRAP_DIR}"/kubernetes-dashboard.yaml
+kubectl apply -f "${BOOTSTRAP_DIR}"/tiller.yaml
 
 helm init --wait --service-account tiller
 helm repo add gitlab https://charts.gitlab.io
@@ -30,10 +29,7 @@ helm upgrade --wait prom "${CHART_DIR}"/prometheus -f "${CHART_DIR}"/prometheus/
 # kubectl get secret --namespace default grafana -o jsonpath="{.data.admin-password}" | base64 --decode ; echo
 helm upgrade --install grafana stable/grafana --set "adminPassword=${GRAFANA_PASSWD}" --set "service.type=NodePort" --set "ingress.enabled=true" --set "ingress.hosts={reddit-grafana}"
 
-kubectl apply -f "${EFK_DIR}"/
-helm upgrade --wait --install kibana stable/kibana \
---set "ingress.enabled=true" \
---set "ingress.hosts={reddit-kibana}" \
---set "env.ELASTICSEARCH_URL=http://elasticsearch-logging:9200" \
---version 0.1.1
+helm dependency update "${CHART_DIR}"/efk
+
+helm upgrade --wait --install logging "${CHART_DIR}"/efk
 

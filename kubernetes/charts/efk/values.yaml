@@ -1,0 +1,21 @@
+---
+kibana:
+#  image:
+#    repository: docker.elastic.co/kibana/kibana-oss
+#    tag: 6.4.2
+  ingress:
+    enabled: true
+    hosts:
+      - reddit-kibana
+  env:
+    ELASTICSEARCH_URL: http://logging-elasticsearch:9200
+
+es:
+  image:
+    repository: k8s.gcr.io/elasticsearch
+    tag: v5.6.4
+
+fluentd:
+  image:
+    repository: gcr.io/google-containers/fluentd-elasticsearch
+    tag: v2.0.2
