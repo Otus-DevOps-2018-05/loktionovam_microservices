@@ -446,3 +446,67 @@ ansible-playbook playbooks/gitlab_runner.yml
 git remote add gitlab http://<your-vm-ip>/homework/example.git
 git push gitlab gitlab-ci-1
 ```
+
+## Homework-17: Устройство Gitlab CI. Непрерывная поставка
+
+Основные задания: расширить существующий пайплайн в gilab ci, определить окружения
+
+Задания со *: при пуше новой ветки должен создаваться сервер для окружения с возможностью удалить его кнопкой
+
+Задания с **: в шаг build добавить сборку контейнера с приложением reddit, контейнер деплоить на созданный для ветки сервер
+
+### 17.1 Что было сделано
+
+- В конвейер непрервывной поставки были добавлены шаги **staging, production** использующие различные окружения
+
+- В ansible создана роль **reddit_monolith** для деплоя контейнера на docker хост
+
+- Изменен плейбук **reddit_app.yml** с учетом **reddit_monolith**
+
+- Написан Dockerfile для сборки docker образа reddit приложения
+
+- Написан Dockerfile для сборки docker образа провижинера приложения, содержащий в себе terraform, ansible
+
+- В docker_host module (terraform) добавлены ресурсы для провижинга приложения
+
+- В шаг build добавлена сборка образов reddit, app_provision с их последующим сохранением в docker registry
+
+- В конвейер непрервывной поставки был добавлен шаг **branch_start_review** для автоматического создания серверов для каждой ветки и деплоя приложения reddit. При этом, для каждой ветки через terrafrom workspace создается инстанс docker хоста, на который плейбуком reddit_app.yml деплоится reddit приложение
+
+- В конвейер непрервывной поставки был добавлен шаг branch_stop_review для удаления серверов
+
+### 17.2 Как запустить проект
+
+Предполагается, что уже настроен gitlab сервер и зарегистрирован gitlab runner
+
+В настройках CI/CD gitlab server нужно добавить следующие переменные:
+
+- `CI_GOOGLE_CREDENTIALS` - переменная для подключения terraform к GCP
+
+- `DOCKER_REGISTRY_USER` - пользователь docker hub registry
+
+- `DOCKER_REGISTRY_PASSWORD` - пароль docker hub registry
+
+- `GCE_SERVICE_ACCOUNT` - содержимое credentials файла от сервисного аккаунта GCP. Используется для настройки динамического инвентори через gce.py (роль ansible gce_py)
+
+- `GCP_PROJECT` - название проекта в GCP
+
+- `SSH_PRIVATE_KEY`, `SSH_PUBLIC_KEY` - пара ssh ключей для подключения к docker host (используются при провиженге через ansible)
+
+После настройки environment переменных при пуше новой ветки в gitlab будет автоматичкски создано окружение и на него развернуто reddit приложение
+
+### 17.3 Как проверить проект
+
+После успешного выполнения шага **branch_start_review**, приложение будет доступно по адресу <http://docker_host_external_ip:9292>
+
+```bash
+
+Outputs:
+
+docker_host_external_ip = [
+    35.240.19.232
+]
+Job succeeded
+```
+
+После проверки приложения, сервер можно удалить нажав на **branch_stop_review**

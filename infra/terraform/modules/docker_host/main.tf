@@ -5,11 +5,11 @@ provider "google" {
 }
 
 resource "google_compute_instance" "docker_host" {
-  name         = "${format("docker-host-%03d", count.index + 1)}"
+  name         = "${format("docker-host-${terraform.workspace}-%03d", count.index + 1)}"
   machine_type = "${var.machine_type}"
   zone         = "${var.zone}"
 
-  tags  = ["docker-host"]
+  tags  = ["docker-host", "docker-host-${terraform.workspace}"]
   count = "${var.count}"
 
   metadata {
@@ -19,13 +19,16 @@ resource "google_compute_instance" "docker_host" {
   boot_disk {
     initialize_params {
       image = "${var.docker_host_disk_image}"
-      size = "${var.size}"
+      size  = "${var.size}"
     }
   }
 
   network_interface {
-    network       = "default"
-    access_config = {}
+    network = "default"
+
+    access_config = {
+      nat_ip = "${google_compute_address.app_ip.address}"
+    }
   }
 
   connection {
@@ -36,8 +39,53 @@ resource "google_compute_instance" "docker_host" {
   }
 }
 
+resource "null_resource" "app" {
+  count = "${var.app_provision_enabled ? 1 : 0}"
+
+  connection {
+    type = "ssh"
+
+    host        = "${google_compute_address.app_ip.address}"
+    user        = "docker-user"
+    agent       = false
+    private_key = "${file(var.private_key_path)}"
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "while fuser /var/lib/dpkg/lock ; do echo 'dpkg locked, waiting...'; sleep 3;done",
+    ]
+  }
+  provisioner "local-exec" {
+    command     = "ansible-playbook playbooks/gce_dynamic_inventory_setup.yml --extra-vars='env=${var.environment}'"
+    working_dir = "../../ansible"
+
+    environment {
+      ANSIBLE_CONFIG = "./ansible.cfg"
+    }
+  }
+
+  provisioner "local-exec" {
+    command     = "environments/${var.environment}/gce.py --refresh-cache >/dev/null 2>&1"
+    working_dir = "../../ansible"
+  }
+
+  provisioner "local-exec" {
+    command     = "ansible-playbook -l ${google_compute_address.app_ip.address} --private-key ${var.private_key_path} playbooks/reddit_app.yml"
+    working_dir = "../../ansible"
+
+    environment {
+      ANSIBLE_CONFIG      = "./ansible.cfg"
+    }
+  }
+}
+
+resource "google_compute_address" "app_ip" {
+  name = "reddit-app-ip-${terraform.workspace}"
+}
+
 resource "google_compute_firewall" "firewall_puma" {
-  name    = "allow-puma-default"
+  name    = "allow-puma-${terraform.workspace}"
   network = "default"
 
   allow {
@@ -50,7 +98,7 @@ resource "google_compute_firewall" "firewall_puma" {
 }
 
 resource "google_compute_firewall" "firewall_web" {
-  name    = "allow-http-default"
+  name    = "allow-http-${terraform.workspace}"
   network = "default"
 
   allow {

@@ -1,0 +1,25 @@
+---
+# tasks file for reddit_monolith
+
+- name: Check that reddit monolith credentials file exist
+  stat:
+    path: "{{ reddit_monolith_credentials }}"
+  register: reddit_monolith_credentials_stat
+  delegate_to: localhost
+
+- name: Load secrets from reddit monolith credentials file
+  include_vars:
+    file: "{{ reddit_monolith_credentials }}"
+  when: reddit_monolith_credentials_stat.stat.exists == true
+
+- name: Start reddit monolith
+  docker_service:
+    project_name: reddit_monolith
+    definition: "{{ reddit_monolith_docker_compose }}"
+
+- name: Check if reddit monolith containers running
+  assert:
+    that:
+      - "{{ item.key }}.reddit_monolith_{{ item.key }}_1.state.running"
+  with_dict:
+    - "{{ reddit_monolith_docker_compose.services }}"

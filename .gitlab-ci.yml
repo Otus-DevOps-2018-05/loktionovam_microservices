@@ -3,24 +3,40 @@ image: ruby:2.4.2
 stages:
   - build
   - test
-  - deploy
+  - review
+  - stage
+  - production
 
 variables:
   DATABASE_URL: 'mongodb://mongo/user_posts'
-
-before_script:
-  - cd reddit
-  - bundle install
+  IMAGE_TAG: ${DOCKER_REGISTRY_USER}/reddit:${CI_COMMIT_REF_SLUG}
+  PROVISION_IMAGE_TAG: ${DOCKER_REGISTRY_USER}/app_provision:${CI_COMMIT_REF_SLUG}
 
 build_job:
   stage: build
+  image: docker:stable
+  variables:
+    DOCKER_HOST: tcp://docker:2375/
+    DOCKER_DRIVER: overlay2
+  services:
+    - docker:dind
+  before_script:
+    - docker info
   script:
-    - echo 'Building'
+    - docker build -t "${IMAGE_TAG}" reddit/
+    - docker login --username="${DOCKER_REGISTRY_USER}" --password="${DOCKER_REGISTRY_PASSWORD}"
+    - docker push "${IMAGE_TAG}"
+    - docker build -t "${PROVISION_IMAGE_TAG}" infra/terraform/
+    - docker push "${PROVISION_IMAGE_TAG}"
 
 test_unit_job:
   stage: test
   services:
     - mongo:latest
+  before_script:
+    - cd reddit
+    - bundle update
+    - bundle install
   script:
     - ruby simpletest.rb
 
@@ -29,7 +45,65 @@ test_integration_job:
   script:
     - echo 'Testing 2'
 
-deploy_job:
-  stage: deploy
+branch_start_review:
+  stage: review
+  environment:
+    name: branch/$CI_COMMIT_REF_NAME
+    url: http://${CI_COMMIT_REF_SLUG}.example.com
+    on_stop: branch_stop_review
+  only:
+    - branches
+  except:
+    - master
+  image:
+    name: "${PROVISION_IMAGE_TAG}"
+    entrypoint: [""]
+  variables:
+    GOOGLE_APPLICATION_CREDENTIALS: "${CI_PROJECT_DIR}/gcp-credentials.json"
+  before_script:
+    - gitlab-ci/setup-ssh.sh
+  script:
+    - gitlab-ci/deploy-host.sh stage
+
+branch_stop_review:
+  stage: review
+  when: manual
+  environment:
+    name: branch/$CI_COMMIT_REF_NAME
+    url: http://${CI_COMMIT_REF_SLUG}.example.com
+    action: stop
+  only:
+    - branches
+  except:
+    - master
+  image:
+    name: "${PROVISION_IMAGE_TAG}"
+    entrypoint: [""]
+  variables:
+    GOOGLE_APPLICATION_CREDENTIALS: "${CI_PROJECT_DIR}/gcp-credentials.json"
+  before_script:
+    - gitlab-ci/setup-ssh.sh
+  script:
+    - gitlab-ci/remove-host.sh stage
+
+staging:
+  stage: stage
+  when: manual
+  only:
+    - /^\d+\.\d+\.\d+/
   script:
     - echo 'Deploy'
+  environment:
+    name: stage
+    url: https://beta.example.com
+
+production:
+  stage: production
+  when: manual
+  only:
+    - /^\d+\.\d+\.\d+/
+  script:
+    - echo 'Deploy'
+  environment:
+    name: production
+    url: https://example.com
