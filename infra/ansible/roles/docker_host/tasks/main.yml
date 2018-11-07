@@ -9,3 +9,8 @@
   import_tasks: install_docker.yml
   become: true
   tags: install
+
+- name: Import configure docker tasks
+  import_tasks: configure_docker.yml
+  become: true
+  tags: configure

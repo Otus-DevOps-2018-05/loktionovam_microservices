@@ -49,6 +49,14 @@ docker_host_python_modules:
 docker_host_user: docker-user
 ```
 
+```yaml
+# Docker daemon configuration
+docker_host_config_file: /etc/docker/daemon.json
+
+# define docker daemon config in this variable. This variable will be rendered to daemon.json during role execution
+docker_host_config: {}
+```
+
 Dependencies
 ------------
 

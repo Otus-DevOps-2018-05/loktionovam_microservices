@@ -5,8 +5,16 @@
   service:
     name: docker
     enabled: true
+  become: true
 
 - name: start docker
   service:
     name: docker
     state: started
+  become: true
+
+- name: restart docker
+  service:
+    name: docker
+    state: restarted
+  become: true

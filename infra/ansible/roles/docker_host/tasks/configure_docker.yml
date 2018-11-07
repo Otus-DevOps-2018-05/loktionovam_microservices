@@ -1,0 +1,7 @@
+---
+
+- name: Dump docker config
+  copy:
+    content: "{{ docker_host_config | to_nice_json }}"
+    dest: "{{ docker_host_config_file }}"
+  notify: restart docker

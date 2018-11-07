@@ -14,7 +14,7 @@ RUN python3 -m venv venv && \
     find / -name "*.pyc" -delete
 
 FROM alpine:3.8
-LABEL version="2.2"
+LABEL version="2.3"
 ENV APP_RUNTIME /app_runtime
 ENV APP_HOME /app
 

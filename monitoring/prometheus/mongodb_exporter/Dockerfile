@@ -10,7 +10,7 @@ RUN apt-get update && \
     rm -r /var/lib/apt/lists/* && \
     git clone "${MONGODB_EXPORTER_REPO_URL}" "${MONGODB_EXPORTER_BUILD_DIR}" && \
     cd "${MONGODB_EXPORTER_BUILD_DIR}" && \
-    git checkout -b "v${MONGODB_EXPORTER_VERSION}" "${MONGODB_EXPORTER_VERSION}" && \
+    git checkout -b "${MONGODB_EXPORTER_VERSION}" "v${MONGODB_EXPORTER_VERSION}" && \
     make build
 
 FROM scratch

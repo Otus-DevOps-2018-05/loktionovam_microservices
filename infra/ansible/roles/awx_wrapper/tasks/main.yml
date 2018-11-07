@@ -1,0 +1,37 @@
+---
+# tasks file for awx_wrapper
+
+- name: Check that awx credentials file exist
+  stat:
+    path: "{{ awx_wrapper_credentials }}"
+  register: awx_wrapper_credentials_stat
+  delegate_to: localhost
+  no_log: true
+  tags:
+    - awx_wrapper_configure
+    - awx_wrapper_install
+    - install
+    - configure
+
+- name: Load secrets from awx credentials file
+  include_vars:
+    file: "{{ awx_wrapper_credentials }}"
+  when: awx_wrapper_credentials_stat.stat.exists == true
+  no_log: true
+  tags:
+    - awx_wrapper_configure
+    - awx_wrapper_install
+    - install
+    - configure
+
+- name: Import install AWX tasks
+  import_tasks: install_awx.yml
+  tags:
+    - awx_wrapper_install
+    - install
+
+- name: Import configure AWX tasks
+  import_tasks: configure_awx.yml
+  tags:
+    - awx_wrapper_configure
+    - configure

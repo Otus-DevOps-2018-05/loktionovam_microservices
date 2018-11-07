@@ -1,0 +1,9 @@
+---
+- name: Install AWX with autoheal
+  hosts: tag_mgmt-host
+
+  roles:
+    - role: awx_wrapper
+    - role: autoheal
+      vars:
+        autoheal_awx_address: http://mgmt-host-default-001/api

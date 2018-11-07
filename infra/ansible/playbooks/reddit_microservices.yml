@@ -1,0 +1,4 @@
+---
+- import_playbook: docker_host.yml
+- import_playbook: configure_microservices.yml
+- import_playbook: launch_microservices.yml

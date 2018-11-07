@@ -36,3 +36,9 @@ def test_docker_user_group(host):
 def test_docker_container_running(host):
     with host.sudo('docker-user'):
         host.check_output("docker run hello-world")
+
+
+def test_docker_daemon_conf(host):
+    f = host.file('/etc/docker/daemon.json')
+
+    assert f.content_string == '{}'

@@ -13,3 +13,7 @@ __pycache__
 .venv
 *.pyc
 .env
+*.secrets
+secrets.tar
+pytestdebug.log
+infra/ansible/roles/geerlingguy*
