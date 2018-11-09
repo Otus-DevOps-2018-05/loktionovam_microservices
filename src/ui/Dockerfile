@@ -13,7 +13,7 @@ RUN bundle install --jobs 4 --deployment --binstubs --standalone && \
     rm vendor/bundle/ruby/2.4.0/cache/*
 
 FROM alpine:3.7
-LABEL version="3.3"
+LABEL version="logging"
 ENV APP_RUNTIME /app_runtime
 ENV APP_HOME /app
 RUN apk add --no-cache ruby

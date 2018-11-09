@@ -123,3 +123,29 @@ resource "google_compute_firewall" "firewall_grafana" {
   source_ranges = ["0.0.0.0/0"]
   target_tags   = ["docker-host"]
 }
+
+resource "google_compute_firewall" "firewall_kibana" {
+  name    = "allow-kibana-${terraform.workspace}"
+  network = "default"
+
+  allow {
+    protocol = "tcp"
+    ports    = ["5601"]
+  }
+
+  source_ranges = ["0.0.0.0/0"]
+  target_tags   = ["docker-host"]
+}
+
+resource "google_compute_firewall" "firewall_zipkin" {
+  name    = "allow-zipkin-${terraform.workspace}"
+  network = "default"
+
+  allow {
+    protocol = "tcp"
+    ports    = ["9411"]
+  }
+
+  source_ranges = ["0.0.0.0/0"]
+  target_tags   = ["docker-host"]
+}

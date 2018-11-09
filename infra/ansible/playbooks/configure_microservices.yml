@@ -10,7 +10,7 @@
       git:
         dest: /home/docker-user/reddit-microservices
         repo: https://github.com/Otus-DevOps-2018-05/loktionovam_microservices.git
-        version: monitoring-2
+        version: logging-1
 
     - name: Copy docker compose environment file
       copy:

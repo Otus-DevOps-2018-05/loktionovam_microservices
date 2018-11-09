@@ -1,7 +1,10 @@
 FROM alpine:3.8 as build
 ENV APP_RUNTIME /app_runtime
 ENV PKG_PATH venv/lib/python3.6/site-packages
-RUN apk add --no-cache python3
+RUN apk add --no-cache  gcc \
+                        musl-dev \
+                        python3 \
+                        python3-dev
 WORKDIR $APP_RUNTIME
 COPY requirements.txt $APP_RUNTIME/
 
@@ -14,7 +17,7 @@ RUN python3 -m venv venv && \
     find / -name "*.pyc" -delete
 
 FROM alpine:3.8
-LABEL version="2.3"
+LABEL version="logging"
 ENV APP_RUNTIME /app_runtime
 ENV APP_HOME /app
 

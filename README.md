@@ -751,3 +751,65 @@ I1017 16:11:11.740007       1 awx_action_runner.go:164] Request to launch AWX jo
 I1017 16:15:38.765453       1 active_jobs_worker.go:27] Going over active jobs queue
 I1017 16:15:39.180936       1 awx_action_runner.go:213] Job 3 status: successful
 ```
+
+## Homework-20: Логирование и распределенная трассировка
+
+Основное задание: сбор неструктурированных логов, визуализация логов, сбор структурированных логов
+
+Задание со *: добавление в fluentd дополнительного фильтра для разбора двух форматов логов UI-сервиса
+
+Задание со *: настройка распределенного трейсинга через zipkin; решение проблемы медленной загрузки поста с помощью zipkin
+
+### 20.1 Что было сделано
+
+- Микросервисы ui, post, comment обновлены до версий, в которых реализована поддержка централизованного логирования и распределенной отладки
+
+- Добавлена конфигурация docker для fluentd
+
+- Добавлена конфигурация (`docker-compose-logging.yml`) для логирования на основе EFK стека
+
+- В Makefile добавлены цели `up_logging`, `down_logging`, `run_logging` для более простой сборки docker образов и запуска сервисов логирования
+
+- Для ui, post микросервисов включено логирование с помощью EFK стека
+
+- (*) Для неструктурированных логов ui сервиса в конфигурации fluentd создано два grok фильтра
+
+- (*) Настроен распределенный трейсинг через zipkin, с помощью которого, проблема медленной загрузки постов
+
+- В terraform добавлены правила файерволла для kibana, zipkin
+
+- В ansible роль docker_host добавлена таска "Setup sysctl vm.max_map_count (need to start Elasticsearch docker container)"
+
+
+Решение проблемы медленной загрузки постов:
+
+- В трейсе zipkin видно, что загрузка поста тормозит (выполняется более 3 секунд) в микросервисе post на span `db_find_single_post`
+
+```json
+{"traceId":"b75e6044b69e4b97","parentId":"10936eab56fcedd8","id":"7bf8af12a44a74dd","kind":"CLIENT","name":"db_find_single_post","timestamp":1539891825806233,"duration":3005865,"localEndpoint":{"serviceName":"post","ipv4":"172.27.0.5","port":5000}},
+```
+
+- В коде `post_app.py` ищем `span=db_find_single_post` и видим, что `time.sleep(3)`. Этот sleep нужно удалить, пересобрать образ post контейнера и перезапустить его
+
+```python
+@zipkin_span(service_name='post', span_name='db_find_single_post')
+def find_post(id):
+...
+        stop_time = time.time()  # + 0.3
+        resp_time = stop_time - start_time
+        app.post_read_db_seconds.observe(resp_time)
+        time.sleep(3)
+
+```
+
+### 20.2 Как запустить проект
+
+Описано в п. 19.2 и дополнительно, после запуска всех приложений, нужно настроить в kibana index pattern для fluentd
+
+### 20.3 Как проверить проект
+
+После запуска проекта будут доступны следующие дополнительные ресурсы
+
+- <http://docker_host_ip:9411> - веб-интерфейс zipkin
+
+- <http://docker_host_ip:5601> - веб-интерфейс kibana

@@ -41,7 +41,7 @@ DEPENDENCIES
   puma
   rack
   rufus-scheduler
-  sinatra (~> 2.0.1)
+  sinatra (~> 2.0.2)
   tzinfo-data
 
 BUNDLED WITH
