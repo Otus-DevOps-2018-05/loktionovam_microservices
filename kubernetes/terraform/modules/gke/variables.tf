@@ -17,18 +17,33 @@ variable cluster_name {
   default     = "cluster-1"
 }
 
-variable machine_type {
-  description = "Machine type"
+variable defaultpool_machine_type {
+  description = "Machine type for default pool"
   default     = "g1-small"
 }
 
-variable size {
-  description = "Boot disk size"
+variable bigpool_machine_type {
+  description = "Machine type for big pool"
+  default     = "n1-standard-2"
+}
+
+variable bigpool_machine_size {
+  description = "Machine boot disk size for bigpool pool"
   default     = 20
 }
 
-variable "nodes_count" {
-  description = "Cluster nodes count"
+variable defaultpool_machine_size {
+  description = "Machine boot disk size for default pool"
+  default     = 20
+}
+
+variable "bigpool_nodes_count" {
+  description = "Cluster nodes count in the big pool"
+  default     = 1
+}
+
+variable "defaultpool_nodes_count" {
+  description = "Cluster nodes count in the default pool"
   default     = 2
 }
 

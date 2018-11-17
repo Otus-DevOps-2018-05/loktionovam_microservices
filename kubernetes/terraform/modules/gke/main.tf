@@ -7,17 +7,32 @@ provider "google" {
 resource "google_container_cluster" "kubernetes" {
   name               = "${var.cluster_name}"
   zone               = "${var.zone}"
-  initial_node_count = "${var.nodes_count}"
   min_master_version = "${var.min_master_version}"
-  enable_legacy_abac = false
-  node_config {
-    disk_size_gb = "${var.size}"
-    machine_type = "${var.machine_type}"
-  }
+  enable_legacy_abac = true
 
   addons_config {
     kubernetes_dashboard = {
       disabled = true
+    }
+  }
+
+  node_pool {
+    name       = "defaultpool"
+    node_count = "${var.defaultpool_nodes_count}"
+
+    node_config {
+      machine_type = "${var.defaultpool_machine_type}"
+      disk_size_gb = "${var.defaultpool_machine_size}"
+    }
+  }
+
+  node_pool {
+    name       = "bigpool"
+    node_count = "${var.bigpool_nodes_count}"
+
+    node_config {
+      machine_type = "${var.bigpool_machine_type}"
+      disk_size_gb = "${var.bigpool_machine_size}"
     }
   }
 }

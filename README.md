@@ -814,7 +814,7 @@ def find_post(id):
 
 - <http://docker_host_ip:5601> - веб-интерфейс kibana
 
-### Homework-21: Введение в Kubernetes
+## Homework-21: Введение в Kubernetes
 
 Основное задание: Разобрать на практике все компоненты kubernetes, развернуть их вручную используя Hard Way, ознакомиться с описанием основных примитивов куввше приложения и его дальнейшим запуском в Kubernetes
 
@@ -879,7 +879,7 @@ cd kubernetes/reddit
 for DEPLOYMENT in *.yml; do kubectl apply -f $DEPLOYMENT;done
 ```
 
-### Homework-22: Kubernetes. Запуск кластера и приложения. Модель безопасности
+## Homework-22: Kubernetes. Запуск кластера и приложения. Модель безопасности
 
 Основное задание: развернуть локальное окружение для работы с k8s; развернуть k8s в GKE; запустить reddit в k8s
 
@@ -966,7 +966,7 @@ REDDIT_PORT=$(kubectl get services ui -n dev -o json | jq '.spec.ports[].nodePor
 
 Приложение должно быть доступно по адресу <http://$REDDIT_IP:$REDDIT_PORT>
 
-### Homework-23: Kubernetes. Networks, Storages
+## Homework-23: Kubernetes. Networks, Storages
 
 Основное задание: ознакомиться с типами сервисов для управления сетью (ClusterIP, NodePort, LoadBalancer), их работой в связке с `kube-dns`; ознакомиться с работой Ingress контроллера для организации доступа к приложению снаружи кластера, балансировки трафика, терминации TLS; ознакомиться с работой сетевых политик для ограничения доступа к сервису mongodb; конфигурирование быстрого, постоянного хранилища для mongodb с помощью persistent volume claim и storage class
 
@@ -1017,3 +1017,66 @@ kubectl apply -f mongo-deployment.yml -n dev
 ```
 
 при этом ранее созданный пост должен остаться.
+
+## Homework-24: CI/CD в Kubernetes
+
+Основное задание: работа с helm, развертывание gitlab в kubernetes, запуск CI/CD конвейера в Kubernetes
+
+Задание со*: связать пайпланы сборки образов и деплоя на staging и production так, чтобы после релиза образа из ветки мастер - запускался деплой уже новой версии приложения на production
+
+### 24.1 Что было сделано
+
+- Установлен helm (локально) и tiller (в k8s)
+
+- Для микросервисов post, reddit, ui разработаны `helm charts`
+
+- В k8s развернут и настроен gitlab omnibus
+
+- Созданы пайпланы в gitlab для ui, commit, post сервисов со стадиями `review/stop_review`
+
+- Создан пайплайн для деплоя reddit приложения в k8s на stage/prod
+
+- (*) Связаны пайплайны сборки образов и деплоя на staging и production
+
+- В конфигурацию terraform добавлены node_pool (defaultpool, bigpool) для более гибкой настройки GKE. В terraform добавлен провиженер GKE настраивающий права, устанавливающий tiller, gitlab и т. д
+
+### 24.2 Как запустить проект
+
+Предполагается, что на локальной машине установлены terraform, kubectl, helm
+
+- Развернуть kubernetes в GKE, при этом будут развернуты tiller и gitlab-omnibus
+
+```bash
+cd kubernetes/terraform
+terraform init
+terraform apply -auto-approve=true
+cd kubernetes
+terraform init
+terraform apply -auto-approve=true
+```
+
+- В gitlab нужно создать группу и проекты ui, comment, post, reddit-deploy
+
+- Для reddit-deploy нужно создать триггер запуска (который будет использован в остальных пайпланах) `reddit_deploy`, при этом нужно сохранить токен в переменной `REDDIT_DEPLOY_TOKEN`
+
+- В gitlab в настройках группы добавить следующие переменные:
+
+```
+CI_REGISTRY_USER - логин в dockerhub
+CI_REGISTRY_PASSWORD - пароль в dockerhub
+REDDIT_DEPLOY_TOKEN - - токен для запуска reddit-deploy из других пайплайнов
+```
+
+- Запушить исходный код в соответствующие проекты ui, comment, post, reddit-deploy
+
+### 24.3 Как проверить проект
+
+- Если изменения произошли не в ветке `master`, то после сборки соответствующего микросервиса в gitlab, в `environments` будет ссылка на `review`.
+
+- Если изменнеия произошли в ветке `master`, то сначала запустится пайплайн для билда соответствующего микросервиса, после которого будет запущен пайплайн для деплоя на stage/prod
+
+- Список запущенных релизов можно увидеть командой
+
+```bash
+helm ls
+```

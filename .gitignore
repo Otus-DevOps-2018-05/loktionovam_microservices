@@ -22,4 +22,4 @@ kubernetes/ansible/files/*.csr
 kubernetes/ansible/files/*.kubeconfig
 kubernetes/ansible/files/encryption-config.yaml
 kubernetes/reddit/cluster-admin-rolebinding.yml
-kubernetes/reddit/ui-ingress-secret.yml
+*.tgz
