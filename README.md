@@ -813,3 +813,68 @@ def find_post(id):
 - <http://docker_host_ip:9411> - веб-интерфейс zipkin
 
 - <http://docker_host_ip:5601> - веб-интерфейс kibana
+
+### Homework-21: Введение в Kubernetes
+
+Основное задание: Разобрать на практике все компоненты kubernetes, развернуть их вручную используя Hard Way, ознакомиться с описанием основных примитивов куввше приложения и его дальнейшим запуском в Kubernetes
+
+Задание со*: Описать установку компонентов kubernetes из туториала `Kubernetes The Hard Way` в виде Ansible-плейбуков в папке `kubernetes/ansible`
+
+### 21.1 Что было сделано
+
+- Пройден туториал `Kubernetes The Hard Way` вручную, проверена загрузка deployment-ов (ui, post, mongo, comment) и запуск подов
+
+- Написаны ansible плейбуки полностью автоматизирующие `Kubernetes The Hard Way`
+
+```bash
+02-client-tools.yml
+03-create-controller-instance.yml
+03-create-worker-instance.yml
+03-provisioning-compute-resources.yml
+04-certificate-authority.yml
+04-copy-creds-to-controller.yml
+04-copy-creds-to-worker.yml
+04-prepare-node.yml
+04-worker-instance-certificate.yml
+05-generate-kubeconfigs.yml
+05-generate-service-kubeconfig.yml
+05-generate-worker-kubeconfig.yml
+06-data-encryption.yml
+07-bootstraping-etcd.yml
+08-bootstrapping-kubernetes-controllers.yml
+08-kubernetes-frontend-load-balancer.yml
+09-bootstrapping-kubernetes-workers.yml
+10-configuring-kubectl.yml
+11-pod-network-routes.yml
+12-dns-addon.yml
+kubernetes_the_hard_way.yml
+```
+
+### 21.2 Как запустить проект
+
+Предполагается, что gcloud уже настроен и есть учетная запись сервисного аккаунта google из под которой будет выполняться создание в GCP инстансов, сетей и т. д.
+
+```bash
+cd kubernetes/ansible
+virtualenv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+export GCE_REGION=$(gcloud config get-value compute/region 2> /dev/null)
+export GCE_CREDENTIALS_FILE_PATH=~/.ansible/gce-service-account.json
+export GCE_EMAIL=user@docker-1234.iam.gserviceaccount.com
+export GCE_PROJECT=docker-1234
+ansible-playbook -K kubernetes_the_hard_way.yml
+```
+
+### 21.3 Как проверить проект
+
+Для проверки инсталляции kubernetes нужно:
+
+- Выполнить шаги описанные в <https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/master/docs/13-smoke-test.md>
+
+- Проверить запуск подов `ui, post, mongo, comment`
+
+```bash
+cd kubernetes/reddit
+for DEPLOYMENT in *.yml; do kubectl apply -f $DEPLOYMENT;done
+```

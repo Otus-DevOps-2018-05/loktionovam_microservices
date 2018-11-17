@@ -1,0 +1,66 @@
+---
+- name: Configuring kubectl for Remote Access
+  hosts: localhost
+  connection: local
+
+  vars:
+    gce_project: "{{ lookup('env','GCE_PROJECT') }}"
+    gce_region: "{{ lookup('env','GCE_REGION') }}"
+    gce_credentials_file: "{{ lookup('env','GCE_CREDENTIALS') }}"
+
+  tasks:
+
+    - name: Check if ~/.kube/config exists
+      stat:
+        path: ~/.kube/config
+      register: kube_config
+
+    - name: Generate a kubeconfig file suitable for authenticating as the admin user
+      block:
+        - name: Get external IP address facts
+          gcp_compute_address_facts:
+            region: "{{ gce_region }}"
+            filters:
+              - name = kubernetes-the-hard-way
+            project: "{{ gce_project }}"
+            auth_kind: serviceaccount
+            service_account_file: "{{ gce_credentials_file }}"
+            scopes: https://www.googleapis.com/auth/compute
+          register: external_ip_stat
+
+        - name: Get Kubernetes external IP address
+          set_fact:
+            kubernetes_public_ip: "{{ external_ip_stat['items'].0.address }}"
+
+        - name: Generate cluster section in the admin kubecofnig
+          command: |
+            kubectl config set-cluster kubernetes-the-hard-way \
+            --certificate-authority=ca.pem \
+            --embed-certs=true \
+            --server=https://{{ kubernetes_public_ip }}:6443
+          args:
+            chdir: files
+
+        - name: Generate credentials section in the admin kubeconfig
+          command: |
+            kubectl config set-credentials admin \
+            --client-certificate=admin.pem \
+            --client-key=admin-key.pem
+          args:
+            chdir: files
+
+        - name: Generate context section in the admin kubeconfig
+          command: |
+            kubectl config set-context kubernetes-the-hard-way \
+            --cluster=kubernetes-the-hard-way \
+            --user=admin
+          args:
+            chdir: files
+
+        - name: Use context kubernetes-the-hard-way
+          command: |
+            kubectl config use-context kubernetes-the-hard-way
+          args:
+            chdir: files
+      when: kube_config.stat.exists == false
+

@@ -17,3 +17,7 @@ __pycache__
 secrets.tar
 pytestdebug.log
 infra/ansible/roles/geerlingguy*
+kubernetes/ansible/files/*.pem
+kubernetes/ansible/files/*.csr
+kubernetes/ansible/files/*.kubeconfig
+kubernetes/ansible/files/encryption-config.yaml

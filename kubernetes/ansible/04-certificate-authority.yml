@@ -1,0 +1,135 @@
+- name: Provisioning a CA and Generating TLS Certificates
+  hosts: localhost
+  connection: local
+
+  vars:
+    gce_project: "{{ lookup('env','GCE_PROJECT') }}"
+    gce_region: "{{ lookup('env','GCE_REGION') }}"
+    gce_credentials_file: "{{ lookup('env','GCE_CREDENTIALS') }}"
+
+  tasks:
+
+    - name: Check if ca.pem exists
+      stat:
+        path: files/ca.pem
+      register: ca_pem_status
+
+    - name: Generate the CA configuration file, certificate, and private key
+      shell: cfssl gencert -initca ca-csr.json | cfssljson -bare ca
+      args:
+        chdir: files
+      when: ca_pem_status.stat.exists == false
+
+    - name: Check if admin.pem exists
+      stat:
+        path: files/admin.pem
+      register: admin_pem_status
+
+    - name: Generate the admin client certificate and private key
+      shell: cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=kubernetes admin-csr.json | cfssljson -bare admin
+      args:
+        chdir: files
+      when: admin_pem_status.stat.exists == false
+
+    - name: Generate worker kubelet client certificates and private keys
+      include_tasks: 04-worker-instance-certificate.yml
+      with_sequence: start=0 end=2
+
+    - name: Check if kube-controller-manager.pem exists
+      stat:
+        path: files/kube-controller-manager.pem
+      register: kube_controller_manager_pem_status
+
+    - name: Generate the kube-controller-manager client certificate and private key
+      shell: |
+        cfssl gencert \
+        -ca=ca.pem \
+        -ca-key=ca-key.pem \
+        -config=ca-config.json \
+        -profile=kubernetes \
+        kube-controller-manager-csr.json | cfssljson -bare kube-controller-manager
+      args:
+        chdir: files
+      when: kube_controller_manager_pem_status.stat.exists == false
+
+    - name: Check if kube-proxy.pem exists
+      stat:
+        path: files/kube-proxy.pem
+      register: kube_proxy_pem_status
+
+    - name: Generate the kube-proxy client certificate and private key
+      shell: |
+        cfssl gencert \
+        -ca=ca.pem \
+        -ca-key=ca-key.pem \
+        -config=ca-config.json \
+        -profile=kubernetes \
+        kube-proxy-csr.json | cfssljson -bare kube-proxy
+      args:
+        chdir: files
+      when: kube_proxy_pem_status.stat.exists == false
+
+    - name: Check if kube-scheduler.pem exists
+      stat:
+        path: files/kube-scheduler.pem
+      register: kube_scheduler_pem_status
+
+    - name: Generate the kube-scheduler client certificate and private key
+      shell: |
+        cfssl gencert \
+        -ca=ca.pem \
+        -config=ca-config.json \
+        -ca-key=ca-key.pem \
+        -profile=kubernetes \
+        kube-scheduler-csr.json | cfssljson -bare kube-scheduler
+      args:
+        chdir: files
+      when: kube_scheduler_pem_status.stat.exists == false
+
+    - name: Check if kubernetes.pem exists
+      stat:
+        path: files/kubernetes.pem
+      register: kubernetes_pem_status
+
+    - name: Generate the kubernetes API server certificate and private key
+      block:
+        - name: Get Kubernetes API server public IP
+          gcp_compute_address_facts:
+            region: "{{ gce_region }}"
+            filters:
+              - name = kubernetes-the-hard-way
+            project: "{{ gce_project }}"
+            auth_kind: serviceaccount
+            service_account_file: "{{ gce_credentials_file }}"
+            scopes: https://www.googleapis.com/auth/compute
+          register: kubernetes_public_ip
+
+        - name: Generate the kubernetes API server certificate and private key
+          shell: |
+            cfssl gencert \
+            -ca=ca.pem \
+            -ca-key=ca-key.pem \
+            -config=ca-config.json \
+            -hostname=10.32.0.1,10.240.0.10,10.240.0.11,10.240.0.12,{{ kubernetes_public_ip['items'].0.address }},127.0.0.1,kubernetes.default \
+            -profile=kubernetes \
+            kubernetes-csr.json | cfssljson -bare kubernetes
+          args:
+            chdir: files
+      when: kubernetes_pem_status.stat.exists == false
+
+    - name: Check if service-account.pem exists
+      stat:
+        path: files/service-account.pem
+      register: service_account_pem_status
+
+    - name: Generate the service-account certificate and private key
+      shell: |
+        cfssl gencert \
+        -ca=ca.pem \
+        -ca-key=ca-key.pem \
+        -config=ca-config.json \
+        -profile=kubernetes \
+        service-account-csr.json | cfssljson -bare service-account
+      args:
+        chdir: files
+      when: service_account_pem_status.stat.exists == false

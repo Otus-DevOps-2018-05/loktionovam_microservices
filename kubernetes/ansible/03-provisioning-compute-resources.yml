@@ -1,0 +1,83 @@
+- name: Provisioning Compute Resources
+  hosts: localhost
+  connection: local
+
+  vars:
+    gce_project: "{{ lookup('env','GCE_PROJECT') }}"
+    gce_region: "{{ lookup('env','GCE_REGION') }}"
+    gce_credentials_file: "{{ lookup('env','GCE_CREDENTIALS') }}"
+  tasks:
+
+    #  Execution failed with error
+    #  "msg": "Update libcloud to a more recent version (>1.0) that supports network 'mode' parameter"
+    #- name: Create the kubernetes-the-hard-way custom VPC network with subnet
+    #  gce_net:
+    #    name: 'kubernetes-the-hard-way'
+    #    mode: legacy
+    #    subnet_name: 'kubernetes'
+    #    ipv4_range: '10.240.16.0/24'
+    #    credentials_file: "{{ gce_credentials_file }}"
+    #    state: present
+
+    - name: Check if kubernetes-the-hard-way network exists
+      command: gcloud compute networks list --filter="name=kubernetes-the-hard-way"
+      register: network_list
+      changed_when: false
+
+    - name: Create the kubernetes-the-hard-way custom VPC network
+      command: gcloud compute networks create kubernetes-the-hard-way --subnet-mode custom
+      when: network_list.stderr == 'Listed 0 items.'
+      register: result
+      changed_when: "'kubernetes-the-hard-way  CUSTOM       REGIONAL' in result.stdout"
+
+    - name: Check if kubernetes subnetwork exists
+      command: gcloud compute networks subnets list --network=kubernetes-the-hard-way
+      register: subnetwork_list
+      changed_when: false
+
+    - name: Create the kubernetes subnet in the kubernetes-the-hard-way VPC network
+      command: gcloud compute networks subnets create kubernetes --network kubernetes-the-hard-way --range 10.240.0.0/24
+      when: subnetwork_list.stderr == 'Listed 0 items.'
+      register: subnetwork_list
+      changed_when: subnetwork_list.stdout == 'NAME        REGION        NETWORK                  RANGE\nkubernetes  europe-west1  kubernetes-the-hard-way  10.240.0.0/24'
+
+    - name: Create a firewall rule that allows internal communication across all protocols
+      gce_net:
+        name: kubernetes-the-hard-way
+        fwname: "kubernetes-the-hard-way-allow-internal"
+        allowed: tcp;udp;icmp
+        state: "present"
+        src_range: ['10.240.0.0/24', '10.200.0.0/16']
+
+    - name: Create a firewall rule that allows external SSH, ICMP, and HTTPS
+      gce_net:
+        name: kubernetes-the-hard-way
+        fwname: "kubernetes-the-hard-way-allow-external"
+        allowed: tcp:22,6443;icmp
+        state: "present"
+        src_range: ['0.0.0.0/0']
+
+    - name: Allocate a static IP address that will be attached to the external load balancer fronting the Kubernetes API Servers
+      gcp_compute_address:
+        name: kubernetes-the-hard-way
+        project: "{{ gce_project }}"
+        region: "{{ gce_region }}"
+        auth_kind: "serviceaccount"
+        service_account_file: "{{ gce_credentials_file }}"
+        state: present
+
+    - name: Import worker instances creation tasks
+      include_tasks: 03-create-worker-instance.yml
+      with_sequence: start=0 end=2
+
+    - name: Import controller instances creation tasks
+      include_tasks: 03-create-controller-instance.yml
+      with_sequence: start=0 end=2
+
+    # Dirty hack here. It is better to poll the node
+    - name: Wait for 5 minutes while instances up
+      pause:
+        minutes: 5
+
+    - name: Refresh inventory to ensure new instaces exist in inventory
+      meta: refresh_inventory

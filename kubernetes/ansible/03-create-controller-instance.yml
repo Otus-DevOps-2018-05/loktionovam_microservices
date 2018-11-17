@@ -1,0 +1,30 @@
+---
+
+# some bug here https://github.com/ansible/ansible/issues/46488
+- name: Create compute instance which will host the Kubernetes control plane (controller-{{ item }})
+  gcp_compute_instance:
+    name: "controller-{{ item }}"
+    machine_type: n1-standard-1
+    can_ip_forward: true
+    metadata:
+      istest: true
+    disks:
+      - auto_delete: true
+        boot: true
+        initialize_params:
+          disk_size_gb: 200
+          source_image: projects/ubuntu-os-cloud/global/images/family/ubuntu-1804-lts
+    network_interfaces:
+      - access_configs:
+          - name: External NAT
+            type: ONE_TO_ONE_NAT
+        subnetwork:
+          selfLink: projects/{{ gce_project }}/regions/{{gce_region }}/subnetworks/kubernetes
+        network_ip: 10.240.0.1{{ item }}
+    tags:
+      items: ["kubernetes-the-hard-way", "controller"]
+    zone: "{{ gce_region }}-b"
+    project: "{{ gce_project }}"
+    auth_kind: "serviceaccount"
+    service_account_file: "{{ gce_credentials_file }}"
+    state: present

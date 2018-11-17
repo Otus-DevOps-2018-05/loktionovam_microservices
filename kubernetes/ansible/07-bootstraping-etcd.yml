@@ -1,0 +1,74 @@
+- name: Bootstrap a etcd cluster and configure it for high availability and secure remote access
+  hosts: tag_controller
+
+  vars:
+    gce_project: "{{ lookup('env','GCE_PROJECT') }}"
+    gce_region: "{{ lookup('env','GCE_REGION') }}"
+    gce_credentials_file: "{{ lookup('env','GCE_CREDENTIALS') }}"
+
+  pre_tasks:
+    - name:  Get controller gcp facts
+      gcp_compute_instance_facts:
+        zone: "{{ gce_region }}-b"
+        filters:
+          - name = {{ inventory_hostname }}
+        project: "{{ gce_project }}"
+        auth_kind: serviceaccount
+        service_account_file: "{{ gce_credentials_file }}"
+        scopes: https://www.googleapis.com/auth/compute
+      register: controller_stat
+      delegate_to: localhost
+
+    - name: Get controller internal IP
+      set_fact:
+        controller_int_ip: "{{ controller_stat['items'].0.networkInterfaces.0.networkIP }}"
+
+  tasks:
+
+    - name: Install etcd
+      block:
+      - name: Download the official etcd release binaries from the coreos/etcd GitHub project
+        unarchive:
+          src: https://github.com/coreos/etcd/releases/download/v3.3.9/etcd-v3.3.9-linux-amd64.tar.gz
+          dest: /usr/local/bin
+          extra_opts: ['--strip-components=1', 'etcd-v3.3.9-linux-amd64/etcdctl', 'etcd-v3.3.9-linux-amd64/etcd']
+          remote_src: true
+          mode: 0755
+        notify: restart etcd
+
+      - name: Create etcd directories
+        file:
+          path: "{{ item }}"
+          state: directory
+        with_items:
+          - /etc/etcd
+          - /var/lib/etcd
+        notify: restart etcd
+
+      - name: Copy certificates and private keys to etcd node
+        copy:
+          src: "{{ item }}"
+          dest: /etc/etcd/{{ item }}
+        with_items:
+          - ca.pem
+          - kubernetes-key.pem
+          - kubernetes.pem
+        no_log: true
+        notify: restart etcd
+
+      - name: Create the etcd.service systemd unit file
+        template:
+          src: etcd.service.j2
+          dest: /etc/systemd/system/etcd.service
+        notify: restart etcd
+      become: true
+
+  handlers:
+
+    - name: restart etcd
+      systemd:
+         name: etcd.service
+         enabled: true
+         daemon_reload: true
+         state: restarted
+      become: true
