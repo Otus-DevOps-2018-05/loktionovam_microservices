@@ -1,0 +1,5 @@
+project = "docker-12345"
+
+region = "europe-west1"
+
+kubernetes_tf_state_bucket = "kubernetes-1234-tf-state"

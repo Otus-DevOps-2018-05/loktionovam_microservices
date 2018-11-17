@@ -1,0 +1,7 @@
+project = "your project id"
+
+size = 20
+
+nodes_count = 3
+
+cluster_name = cluster-1
