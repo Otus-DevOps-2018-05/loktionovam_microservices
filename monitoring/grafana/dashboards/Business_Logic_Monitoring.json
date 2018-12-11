@@ -54,7 +54,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "rate(comment_count[1h])",
+          "expr": "rate(comment_count{kubernetes_namespace=~\"$namespace\"}[1h])",
           "format": "time_series",
           "intervalFactor": 1,
           "refId": "A"
@@ -94,7 +94,11 @@
           "min": null,
           "show": true
         }
-      ]
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     },
     {
       "aliasColors": {},
@@ -133,7 +137,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "rate(post_count[1h])",
+          "expr": "rate(post_count{kubernetes_namespace=~\"$namespace\"}[1h])",
           "format": "time_series",
           "intervalFactor": 1,
           "refId": "A"
@@ -173,14 +177,18 @@
           "min": null,
           "show": true
         }
-      ]
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     },
     {
       "aliasColors": {},
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": null,
+      "datasource": "Prometheus server",
       "fill": 1,
       "gridPos": {
         "h": 9,
@@ -212,8 +220,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "$$hashKey": "object:129",
-          "expr": "rate(vote_count[1h])",
+          "expr": "rate(vote_count{kubernetes_namespace=~\"$namespace\"}[1h])",
           "format": "time_series",
           "intervalFactor": 1,
           "refId": "A"
@@ -253,14 +260,84 @@
           "min": null,
           "show": true
         }
-      ]
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
     }
   ],
   "schemaVersion": 16,
   "style": "dark",
   "tags": [],
   "templating": {
-    "list": []
+    "list": [
+      {
+        "allValue": null,
+        "current": {
+          "text": "default",
+          "value": "default"
+        },
+        "datasource": "Prometheus server",
+        "hide": 0,
+        "includeAll": true,
+        "label": "env",
+        "multi": true,
+        "name": "namespace",
+        "options": [
+          {
+            "selected": false,
+            "text": "All",
+            "value": "$__all"
+          },
+          {
+            "selected": true,
+            "text": "default",
+            "value": "default"
+          },
+          {
+            "selected": false,
+            "text": "kube-lego",
+            "value": "kube-lego"
+          },
+          {
+            "selected": false,
+            "text": "kube-public",
+            "value": "kube-public"
+          },
+          {
+            "selected": false,
+            "text": "kube-system",
+            "value": "kube-system"
+          },
+          {
+            "selected": false,
+            "text": "nginx-ingress",
+            "value": "nginx-ingress"
+          },
+          {
+            "selected": false,
+            "text": "production",
+            "value": "production"
+          },
+          {
+            "selected": false,
+            "text": "staging",
+            "value": "staging"
+          }
+        ],
+        "query": "label_values(namespace)",
+        "refresh": 0,
+        "regex": "/.+/",
+        "skipUrlSync": false,
+        "sort": 0,
+        "tagValuesQuery": "",
+        "tags": [],
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
+      }
+    ]
   },
   "time": {
     "from": "now-5m",
@@ -294,5 +371,5 @@
   "timezone": "",
   "title": "Business_Logic_Monitoring",
   "uid": "-zZwQp2iz",
-  "version": 4
+  "version": 7
 }

@@ -33,6 +33,10 @@ resource "google_container_cluster" "kubernetes" {
     node_config {
       machine_type = "${var.bigpool_machine_type}"
       disk_size_gb = "${var.bigpool_machine_size}"
+
+      labels {
+        elastichost = "true"
+      }
     }
   }
 }

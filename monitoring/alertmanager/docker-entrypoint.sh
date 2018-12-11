@@ -1,5 +1,4 @@
 #!/bin/ash
-
 source /alertmanager.secrets
 cat > /etc/alertmanager/config.yml <<EOF
 global:
@@ -18,8 +17,6 @@ receivers:
     from: $ALERTMANGER_EMAIL_FROM
     auth_username: $ALERTMANGER_EMAIL_AUTH_USERNAME
     auth_password: $ALERTMANGER_EMAIL_AUTH_PASSWORD
-  webhook_configs:
-  - url: http://mgmt-host-default-001:9099/alerts
 EOF
 
 exec "$@"

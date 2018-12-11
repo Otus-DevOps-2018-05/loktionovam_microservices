@@ -1,0 +1,4 @@
+---
+image:
+  repository: k8s.gcr.io/elasticsearch
+  tag: v5.6.4

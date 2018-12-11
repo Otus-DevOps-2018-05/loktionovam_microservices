@@ -1,0 +1,6 @@
+---
+image:
+  repository: gcr.io/google-containers/fluentd-elasticsearch
+  tag: v2.0.2
+
+databaseHost:
